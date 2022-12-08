@@ -3,29 +3,40 @@
 #
 # Expressions arithmétiques sans variables
 # -----------------------------------------------------------------------------
+reserved = {
+   'print': 'PRINT'
+}
 
 tokens = (
     'NUMBER','MINUS',
     'PLUS','TIMES','DIVIDE',
-    'LPAREN','RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL'
+    'LPAREN','RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
+    'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT'
     )
 
 # Tokens
-t_PLUS          = r'\+'
-t_MINUS         = r'-'
-t_TIMES         = r'\*'
-t_DIVIDE        = r'/'
-t_LPAREN        = r'\('
-t_RPAREN        = r'\)'
-t_AND           = r'\&'
-t_OR            = r'\|'
-t_SEMICOLON     = r';'
-t_EQUAL         = r'='
+t_PLUS              = r'\+'
+t_MINUS             = r'-'
+t_TIMES             = r'\*'
+t_DIVIDE            = r'/'
+t_LPAREN            = r'\('
+t_RPAREN            = r'\)'
+t_AND               = r'\&'
+t_OR                = r'\|'
+t_SEMICOLON         = r';'
+t_EQUAL             = r'='
+t_INFERIOR          = r'<'
+t_SUPERIOR          = r'>'
+t_INFERIOR_EQUAL    = r'<='
+t_SUPERIOR_EQUAL    = r'>='
+t_DIFFERENT         = r'!='
+t_EQUALEQUAL        = r'=='
 
 names = {}
 
 def t_NAME(t):
     '[a-zA-Z_][a-zA-Z0-9_]*'
+    t.type = reserved.get(t.value, 'NAME')
     return t
 
 def t_NUMBER(t):
@@ -80,11 +91,25 @@ def p_expression_number(p):
 
 def p_expression_binop_bool(p):
     '''expression : expression AND expression
-                  | expression OR expression'''
-    if p[2] == '&':
-        p[0] = p[1] and p[3]
-    else:
-        p[0] = p[1] or p[3]
+                  | expression OR expression
+                  | expression INFERIOR expression
+                  | expression SUPERIOR expression
+                  | expression INFERIOR_EQUAL expression
+                  | expression SUPERIOR_EQUAL expression
+                  | expression DIFFERENT expression
+                  | expression EQUALEQUAL expression'''
+    switcher = {
+        '&': p[1] and p[3],
+        '|': p[1] or p[3],
+        '<': p[1] < p[3],
+        '>': p[1] > p[3],
+        '<=': p[1] <= p[3],
+        '>=': p[1] >= p[3],
+        '!=': p[1] != p[3],
+        '==': p[1] == p[3]
+    }
+
+    p[0] = switcher.get(p[2])
 
 def p_expression_assign(p):
     'expression : NAME EQUAL expression'
