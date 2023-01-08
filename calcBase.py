@@ -7,12 +7,12 @@ reserved = {
    'print': 'PRINT'
 }
 
-tokens = (
+tokens = [
     'NUMBER','MINUS',
     'PLUS','TIMES','DIVIDE',
     'LPAREN','RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
     'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT'
-    )
+    ] + list(reserved.values())
 
 # Tokens
 t_PLUS              = r'\+'
@@ -31,6 +31,7 @@ t_INFERIOR_EQUAL    = r'<='
 t_SUPERIOR_EQUAL    = r'>='
 t_DIFFERENT         = r'!='
 t_EQUALEQUAL        = r'=='
+t_PRINT             = r'print'
 
 names = {}
 
@@ -65,7 +66,7 @@ def p_bloc(p):
 
 def p_statement_expr(p):
     'statement : expression'
-    print(p[1])
+    #print(p[1]) # Just for debug
 
 def p_expression_binop_plus(p):
     'expression : expression PLUS expression'
@@ -114,15 +115,18 @@ def p_expression_binop_bool(p):
 def p_expression_assign(p):
     'expression : NAME EQUAL expression'
     names[p[1]] = p[3]
-    print(names)
+    #print(names) # Just for debug
 
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
+
+def p_print(p):
+    """expression : PRINT LPAREN expression RPAREN
+                  | PRINT LPAREN NAME RPAREN"""
+    p[3] in names and print(names[p[3]]) or print(p[3])
 
 import ply.yacc as yacc
 yacc.yacc()
 
 s = input('calc > ')
 yacc.parse(s)
-
-    
