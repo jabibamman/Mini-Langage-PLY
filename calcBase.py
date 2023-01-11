@@ -11,7 +11,7 @@ tokens = [
     'NUMBER','MINUS',
     'PLUS','TIMES','DIVIDE',
     'LPAREN','RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
-    'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT'
+    'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING"
     ] + list(reserved.values())
 
 # Tokens
@@ -32,6 +32,7 @@ t_SUPERIOR_EQUAL    = r'>='
 t_DIFFERENT         = r'!='
 t_EQUALEQUAL        = r'=='
 t_PRINT             = r'print'
+t_DOUBLEQUOTE       = r'\"'
 
 names = {}
 
@@ -43,6 +44,12 @@ def t_NAME(t):
 def t_NUMBER(t):
     r'\d+'
     t.value = int(t.value)
+    return t
+
+def t_STRING(t):
+    r'\".*\"'
+    t.value = str(t.value)
+    t.type = reserved.get(t.value, 'STRING')
     return t
 
 # Ignored characters
@@ -98,6 +105,10 @@ def p_expression_name(p):
         print("Undefined name '%s'" % p[1])
         p[0] = 0
 
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
+
 def p_expression_binop_bool(p):
     '''expression : expression AND expression
                   | expression OR expression
@@ -128,16 +139,23 @@ def p_error(p):
     print("Syntax error at '%s'" % p.value)
 
 def p_print(p):
-    """statement : PRINT LPAREN expression RPAREN"""
+    """statement : PRINT LPAREN expression RPAREN
+                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
 
-    if p[3] not in names :
-        print(p[3])
+    # TODO: faire en sorte de pouvoir untiliser des STRING
+    if p[3] == '"' :
+        print(p[4])
     else:
-        print(names[p[3]])
+        print(p[3])
+
 
 
 import ply.yacc as yacc
 yacc.yacc()
 
-s = input('calc > ')
-yacc.parse(s)
+while True:
+    try:
+        s = input('calc > ')
+    except EOFError:
+        break
+    yacc.parse(s)
