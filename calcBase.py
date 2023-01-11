@@ -90,6 +90,14 @@ def p_expression_number(p):
     'expression : NUMBER'
     p[0] = p[1]
 
+def p_expression_name(p):
+    'expression : NAME'
+    try:
+        p[0] = names[p[1]]
+    except LookupError:
+        print("Undefined name '%s'" % p[1])
+        p[0] = 0
+
 def p_expression_binop_bool(p):
     '''expression : expression AND expression
                   | expression OR expression
@@ -115,7 +123,6 @@ def p_expression_binop_bool(p):
 def p_expression_assign(p):
     'expression : NAME EQUAL expression'
     names[p[1]] = p[3]
-    #print(names) # Just for debug
 
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
@@ -123,7 +130,11 @@ def p_error(p):
 def p_print(p):
     """expression : PRINT LPAREN expression RPAREN
                   | PRINT LPAREN NAME RPAREN"""
-    p[3] in names and print(names[p[3]]) or print(p[3])
+
+    if p[3] not in names :
+        print(p[3])
+    else:
+        print(names[p[3]])
 
 import ply.yacc as yacc
 yacc.yacc()
