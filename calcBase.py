@@ -14,6 +14,7 @@ tokens = [
              'PLUS', 'TIMES', 'DIVIDE',
              'LPAREN', 'RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
              'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING"
+             'COMMENT'
          ] + list(reserved.values())
 
 # Tokens
@@ -36,8 +37,10 @@ t_EQUALEQUAL = r'=='
 t_PRINT = r'print'
 t_DOUBLEQUOTE = r'\"'
 
-names = {}
+# Ignored characters
+t_ignore = " \t"
 
+names = {}
 
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9_]*'
@@ -57,15 +60,14 @@ def t_STRING(t):
     t.type = reserved.get(t.value, 'STRING')
     return t
 
-
-# Ignored characters
-t_ignore = " \t"
+def t_COMMENT(t):
+    r'//.*|/\*.*?\*/'
+    pass
 
 
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
-
 
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
@@ -87,6 +89,9 @@ def p_statement_expr(p):
     'statement : expression'
     # print(p[1]) # Just for debug
 
+def p_statement_comment(p):
+    '''statement : COMMENT'''
+    pass
 
 def p_expression_binop_plus(p):
     'expression : expression PLUS expression'
@@ -110,7 +115,6 @@ def p_expression_binop_divide_and_minus(p):
 def p_expression_group(p):
     'expression : LPAREN expression RPAREN'
     p[0] = p[2]
-
 
 def p_expression_number(p):
     'expression : NUMBER'
