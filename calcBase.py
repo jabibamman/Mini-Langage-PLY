@@ -3,6 +3,8 @@
 #
 # Expressions arithmétiques sans variables
 # -----------------------------------------------------------------------------
+import ply.yacc
+
 reserved = {
     'print': 'PRINT'
 }
@@ -114,7 +116,6 @@ def p_expression_number(p):
     'expression : NUMBER'
     p[0] = p[1]
 
-
 def p_expression_name(p):
     'expression : NAME'
     try:
@@ -122,11 +123,9 @@ def p_expression_name(p):
     except LookupError:
         print("Undefined name '%s'" % p[1])
 
-
 def p_expression_string(p):
     'expression : STRING'
-    p[0] = p[1]
-
+    p[0] = p[1].replace('"', '')
 
 def p_expression_binop_bool(p):
     '''expression : expression AND expression
