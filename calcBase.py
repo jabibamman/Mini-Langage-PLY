@@ -153,12 +153,15 @@ def p_expression_binop_bool(p):
 
 def p_expression_assign(p):
     '''statement : NAME EQUAL expression
-                 | NAME PLUS PLUS'''
+                 | NAME PLUS PLUS
+                 | NAME PLUS EQUAL expression'''
     try:
         if p[2] == '=':
             names[p[1]] = p[3]
         elif p[2] == '+' and p[3] == '+':
             names[p[1]] = names[p[1]] + 1
+        elif p[2] == '+' and p[3] == '=':
+            names[p[1]] = names[p[1]] + p[4]
     except LookupError:
         print("Undefined name '%s'" % p[1])
 
