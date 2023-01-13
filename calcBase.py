@@ -62,6 +62,8 @@ def t_STRING(t):
 
 def t_COMMENT(t):
     r'//.*|/\*.*?\*/'
+    t.lexer.lineno += t.value.count('\n')
+    t.type = reserved.get(t.value, 'COMMENT')
     pass
 
 
@@ -82,7 +84,8 @@ lex.lex()
 
 def p_bloc(p):
     '''START : START statement SEMICOLON
-            | statement SEMICOLON'''
+            | statement SEMICOLON
+            |'''
 
 
 def p_statement_expr(p):
@@ -110,7 +113,6 @@ def p_expression_binop_divide_and_minus(p):
         p[0] = p[1] - p[3]
     else:
         p[0] = p[1] / p[3]
-
 
 def p_expression_group(p):
     'expression : LPAREN expression RPAREN'
