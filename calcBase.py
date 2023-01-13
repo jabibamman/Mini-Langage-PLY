@@ -1,3 +1,5 @@
+from genereTreeGraphviz2 import printTreeGraph
+
 # -----------------------------------------------------------------------------
 # calc.py
 #
@@ -11,14 +13,23 @@ reserved = {
 
 tokens = [
              'NUMBER', 'MINUS',
-             'PLUS', 'TIMES', 'DIVIDE',
+             'PLUS','PLUSPLUS', 'TIMES', 'DIVIDE',
              'LPAREN', 'RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
              'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING",
-             'COMMENT'
+             'COMMENT', 'FOR'
          ] + list(reserved.values())
+
+precedence = (
+    ('left', 'OR'),
+    ('left', 'AND'),
+    ('nonassoc', 'EQUALEQUAL', 'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'TIMES', 'DIVIDE'),
+)
 
 # Tokens
 t_PLUS = r'\+'
+t_PLUSPLUS = r'\+\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
@@ -35,12 +46,8 @@ t_SUPERIOR_EQUAL = r'>='
 t_DIFFERENT = r'!='
 t_EQUALEQUAL = r'=='
 t_PRINT = r'print'
+t_FOR = r'for'
 t_DOUBLEQUOTE = r'\"'
-
-# Ignored characters
-t_ignore = " \t"
-
-names = {}
 
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9_]*'
@@ -60,59 +67,136 @@ def t_STRING(t):
     t.type = reserved.get(t.value, 'STRING')
     return t
 
-def t_COMMENT(t):
-    r'//.*|/\*.*?\*/'
-    t.lexer.lineno += t.value.count('\n')
-    t.type = reserved.get(t.value, 'COMMENT')
-    pass
-
+# Ignored characters
+t_ignore = " \t"
 
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
+
 
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
 
 
+def t_COMMENT(t):
+    r'//.*|/\*.*?\*/'
+    t.lexer.lineno += t.value.count('\n')
+    t.type = reserved.get(t.value, 'COMMENT')
+    pass
+
 # Build the lexer
 import ply.lex as lex
 
 lex.lex()
 
+def evalInst(p):
+    print("evaInst de ", p)
+    if p == 'empty': return
+    if type(p) != tuple:
+        print("inst non tuple")
+        return
+
+    if p[0] == 'bloc':
+        evalInst(p[1])
+        evalInst(p[2])
+        return
+
+    if p[0] == 'ASSIGN':
+        names[p[1]] = evalExpr(p[2])
+
+
+    if p[0] == 'PRINT':
+        if(p[1][0] == 'STRING'):
+            print("CALC> ", p[1][1])
+        else:
+            print("CALC> ", evalExpr(p[1]))
+
+
+    if p[0] == 'FOR':
+        for i in range(p[2], p[3]):
+            evalInst(p[3])
+        return
+    return 'UNK'
+
+
+names = {}
+
+def evalExpr(p):
+    if type(p) == int: return p
+    if type(p) == str: return names[p]
+    if type(p) == tuple:
+        if p[0] == '+': return evalExpr(p[1]) + evalExpr(p[2])
+        if p[0] == '-': return evalExpr(p[1]) - evalExpr(p[2])
+        if p[0] == '*': return evalExpr(p[1]) * evalExpr(p[2])
+        if p[0] == '/': return evalExpr(p[1]) / evalExpr(p[2])
+        # if p[0] == '<' : return evalExpr(p[1]) < evalExpr(p[2])
+        # if p[0] == '>' : return evalExpr(p[1]) > evalExpr(p[2])
+        # if p[0] == '<=' : return evalExpr(p[1] <= evalExpr(p[2]))
+        # if p[0] == '>=' : return evalExpr(p[1] >= evalExpr(p[2]))
+        # if p[0] == '!=' : return evalExpr(p[1]) != evalExpr(p[2])
+        # if p[0] == '==' : return evalExpr(p[1] == evalExpr(p[2]))
+        # if p[0] == '&' : return evalExpr(p[[1]]) and evalExpr(p[2])
+        # if p[0] == '|' : return evalExpr(p[[1]]) or evalExpr(p[2])
+    return "UNK"
+
+
+def p_start(p):
+    ''' start : bloc '''
+    print(p[1])
+    printTreeGraph(p[1])
+    evalInst(p[1])
 
 def p_bloc(p):
-    '''START : START statement SEMICOLON
+    '''bloc : bloc statement SEMICOLON
             | statement SEMICOLON
             |'''
+    if len(p) == 3:
+        p[0] = ('bloc', p[1], 'empty')
+    else:
+        p[0] = ('bloc', p[1], p[2])
+
+
+def p_statement_assign(p):
+    'statement : NAME EQUAL expression'
+    p[0] = ('ASSIGN', p[1], p[3])
 
 
 def p_statement_expr(p):
-    'statement : expression'
-    # print(p[1]) # Just for debug
+    """statement : PRINT LPAREN expression RPAREN
+                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN
+                 | FOR LPAREN NAME EQUAL expression SEMICOLON NAME INFERIOR expression SEMICOLON NAME PLUSPLUS RPAREN bloc"""
 
-def p_statement_comment(p):
-    '''statement : COMMENT'''
-    pass
+    print("statement_expr", p[1])
 
-def p_expression_binop_plus(p):
-    'expression : expression PLUS expression'
-    p[0] = p[1] + p[3]
-
-
-def p_expression_binop_times(p):
-    'expression : expression TIMES expression'
-    p[0] = p[1] * p[3]
-
-
-def p_expression_binop_divide_and_minus(p):
-    '''expression : expression MINUS expression
-				| expression DIVIDE expression'''
-    if p[2] == '-':
-        p[0] = p[1] - p[3]
+    if p[3] == '"':
+        p[0] = ('PRINT', (p[4]))
+    elif p[1] == 'for':
+        p[0] = ('FOR', p[3], p[5], p[7], p[9], p[11])
     else:
-        p[0] = p[1] / p[3]
+        p[0] = ('PRINT', ('STRING', p[3]))
+
+def p_expression_binop(p):
+    '''expression : expression PLUS expression
+                  | expression MINUS expression
+                  | expression TIMES expression
+                  | expression DIVIDE expression
+                  | expression INFERIOR expression
+                  | expression AND expression
+                  | expression OR expression
+                  | expression SUPERIOR expression
+                  | expression INFERIOR_EQUAL expression
+                  | expression SUPERIOR_EQUAL expression
+                  | expression DIFFERENT expression
+                  | expression EQUALEQUAL expression'''
+    p[0] = (p[2], p[1], p[3])
+
+
+def p_expression_uminus(p):
+    'expression : MINUS expression '
+    p[0] = -p[2]
+
 
 def p_expression_group(p):
     'expression : LPAREN expression RPAREN'
@@ -124,75 +208,33 @@ def p_expression_number(p):
 
 def p_expression_name(p):
     'expression : NAME'
-    try:
-        p[0] = names[p[1]]
-    except LookupError:
-        print("Undefined name '%s'" % p[1])
+    p[0] = p[1]
+
+def p_statement_comment(p):
+    '''statement : COMMENT'''
+    pass
 
 def p_expression_string(p):
     'expression : STRING'
     p[0] = p[1].replace('"', '')
 
-def p_expression_binop_bool(p):
-    '''expression : expression AND expression
-                  | expression OR expression
-                  | expression INFERIOR expression
-                  | expression SUPERIOR expression
-                  | expression INFERIOR_EQUAL expression
-                  | expression SUPERIOR_EQUAL expression
-                  | expression DIFFERENT expression
-                  | expression EQUALEQUAL expression'''
-    switcher = {
-        '&': p[1] and p[3],
-        '|': p[1] or p[3],
-        '<': p[1] < p[3],
-        '>': p[1] > p[3],
-        '<=': p[1] <= p[3],
-        '>=': p[1] >= p[3],
-        '!=': p[1] != p[3],
-        '==': p[1] == p[3]
-    }
-
-    p[0] = switcher.get(p[2])
-
-
-def p_expression_assign(p):
-    '''statement : NAME EQUAL expression
-                 | NAME PLUS PLUS
-                 | NAME PLUS EQUAL expression'''
-    try:
-        if p[2] == '=':
-            names[p[1]] = p[3]
-        elif p[2] == '+' and p[3] == '+':
-            names[p[1]] = names[p[1]] + 1
-        elif p[2] == '+' and p[3] == '=':
-            names[p[1]] = names[p[1]] + p[4]
-    except LookupError:
-        print("Undefined name '%s'" % p[1])
-
-
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
-
-
-def p_print(p):
-    """statement : PRINT LPAREN expression RPAREN
-                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
-
-    # TODO: faire en sorte de pouvoir untiliser des STRING
-    if p[3] == '"':
-        print(p[4])
-    else:
-        print(p[3])
 
 
 import ply.yacc as yacc
 
 yacc.yacc()
+# s = 'print(1+2);x=4;x=x+1;'
+#s = 'print("bonjour");'
+s = 'for(i=0;i<10;i++);'
 
-while True:
-    try:
-        s = input('calc > ')
-    except EOFError:
-        break
-    yacc.parse(s)
+# while True:
+#     try:
+#         #s = input('calc > ')
+#         # s = 'x=1;x+3+1;'
+#         # s = 'print(1<2 & 2<1);'
+#
+#     except EOFError:
+#         break
+yacc.parse(s)
