@@ -145,17 +145,17 @@ def evalExpr(p):
 def p_start(p):
     ''' start : bloc '''
     print(p[1])
-    printTreeGraph(p[1])
+    #printTreeGraph(p[1])
     evalInst(p[1])
 
 def p_bloc(p):
     '''bloc : bloc statement SEMICOLON
-            | statement SEMICOLON
-            |'''
-    if len(p) == 3:
-        p[0] = ('bloc', p[1], 'empty')
-    else:
+            | statement SEMICOLON'''
+    if len(p) == 4:
         p[0] = ('bloc', p[1], p[2])
+    else:
+        p[0] = ('bloc', p[1], 'empty')
+
 
 
 def p_statement_assign(p):
@@ -193,7 +193,7 @@ def p_expression_binop(p):
 
 
 def p_expression_uminus(p):
-    'expression : MINUS expression '
+    'expression : MINUS expression'
     p[0] = -p[2]
 
 
@@ -201,21 +201,26 @@ def p_expression_group(p):
     'expression : LPAREN expression RPAREN'
     p[0] = p[2]
 
+
 def p_expression_number(p):
     'expression : NUMBER'
     p[0] = p[1]
+
 
 def p_expression_name(p):
     'expression : NAME'
     p[0] = p[1]
 
+
 def p_statement_comment(p):
-    '''statement : COMMENT'''
+    'statement : COMMENT'
     pass
+
 
 def p_expression_string(p):
     'expression : STRING'
     p[0] = p[1]
+
 
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
