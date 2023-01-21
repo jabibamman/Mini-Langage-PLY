@@ -168,14 +168,13 @@ def p_statement_expr(p):
                  | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN
                  | FOR LPAREN NAME EQUAL expression SEMICOLON NAME INFERIOR expression SEMICOLON NAME PLUSPLUS RPAREN bloc"""
 
-    print("statement_expr", p[1])
-
-    if p[3] == '"':
-        p[0] = ('PRINT', (p[4]))
+    if p[3] == tuple:
+        if p[3].startswith('"'):
+            p[0] = ('PRINT', ('STRING', p[3].strip('"')))
     elif p[1] == 'for':
         p[0] = ('FOR', p[3], p[5], p[7], p[9], p[11])
     else:
-        p[0] = ('PRINT', ('STRING', p[3]))
+        p[0] = ('PRINT', p[3])
 
 def p_expression_binop(p):
     '''expression : expression PLUS expression
@@ -216,7 +215,7 @@ def p_statement_comment(p):
 
 def p_expression_string(p):
     'expression : STRING'
-    p[0] = p[1].replace('"', '')
+    p[0] = p[1]
 
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
@@ -225,9 +224,9 @@ def p_error(p):
 import ply.yacc as yacc
 
 yacc.yacc()
-# s = 'print(1+2);x=4;x=x+1;'
+s = 'print(1+2);x=4;x=x+1;'
 #s = 'print("bonjour");'
-s = 'for(i=0;i<10;i++);'
+#s = 'for(i=0;i<10;i++);'
 
 # while True:
 #     try:
