@@ -124,21 +124,21 @@ def evalInst(p):
 names = {}
 
 def evalExpr(p):
-    if type(p) == int: return p
-    if type(p) == str: return names[p]
-    if type(p) == tuple:
+    if type(p) is int: return p
+    if type(p) is str: return names[p]
+    if type(p) is tuple:
         if p[0] == '+': return evalExpr(p[1]) + evalExpr(p[2])
         if p[0] == '-': return evalExpr(p[1]) - evalExpr(p[2])
         if p[0] == '*': return evalExpr(p[1]) * evalExpr(p[2])
         if p[0] == '/': return evalExpr(p[1]) / evalExpr(p[2])
-        # if p[0] == '<' : return evalExpr(p[1]) < evalExpr(p[2])
-        # if p[0] == '>' : return evalExpr(p[1]) > evalExpr(p[2])
-        # if p[0] == '<=' : return evalExpr(p[1] <= evalExpr(p[2]))
-        # if p[0] == '>=' : return evalExpr(p[1] >= evalExpr(p[2]))
-        # if p[0] == '!=' : return evalExpr(p[1]) != evalExpr(p[2])
-        # if p[0] == '==' : return evalExpr(p[1] == evalExpr(p[2]))
-        # if p[0] == '&' : return evalExpr(p[[1]]) and evalExpr(p[2])
-        # if p[0] == '|' : return evalExpr(p[[1]]) or evalExpr(p[2])
+        if p[0] == '<' : return evalExpr(p[1]) < evalExpr(p[2])
+        if p[0] == '>' : return evalExpr(p[1]) > evalExpr(p[2])
+        if p[0] == '<=' : return evalExpr(p[1] <= evalExpr(p[2]))
+        if p[0] == '>=' : return evalExpr(p[1] >= evalExpr(p[2]))
+        if p[0] == '!=' : return evalExpr(p[1]) != evalExpr(p[2])
+        if p[0] == '==' : return evalExpr(p[1] == evalExpr(p[2]))
+        if p[0] == '&' : return evalExpr(p[[1]]) and evalExpr(p[2])
+        if p[0] == '|' : return evalExpr(p[[1]]) or evalExpr(p[2])
     return "UNK"
 
 
