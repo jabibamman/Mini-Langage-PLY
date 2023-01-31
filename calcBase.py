@@ -163,16 +163,11 @@ def p_statement_assign(p):
     p[0] = ('ASSIGN', p[1], p[3])
 
 
-def p_statement_expr(p):
+def p_statement_print(p):
     """statement : PRINT LPAREN expression RPAREN
-                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN
-                 | FOR LPAREN NAME EQUAL expression SEMICOLON NAME INFERIOR expression SEMICOLON NAME PLUSPLUS RPAREN bloc"""
-
-    if p[3] == tuple:
-        if p[3].startswith('"'):
-            p[0] = ('PRINT', ('STRING', p[3].strip('"')))
-    elif p[1] == 'for':
-        p[0] = ('FOR', p[3], p[5], p[7], p[9], p[11])
+                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
+    if isinstance(p[3], str):
+        p[0] = ('PRINT', ('STRING', p[3].strip('"')))
     else:
         p[0] = ('PRINT', p[3])
 
