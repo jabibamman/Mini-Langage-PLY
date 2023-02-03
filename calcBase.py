@@ -8,15 +8,16 @@ from genereTreeGraphviz2 import printTreeGraph
 import ply.yacc
 
 reserved = {
-    'print': 'PRINT'
+    'print': 'PRINT',
+    'for': 'FOR'
 }
 
 tokens = [
              'NUMBER', 'MINUS',
-             'PLUS','PLUSPLUS', 'TIMES', 'DIVIDE',
-             'LPAREN', 'RPAREN', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
+             'PLUS', 'TIMES', 'DIVIDE',
+             'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
              'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING",
-             'COMMENT', 'FOR'
+             'COMMENT'
          ] + list(reserved.values())
 
 precedence = (
@@ -29,7 +30,6 @@ precedence = (
 
 # Tokens
 t_PLUS = r'\+'
-t_PLUSPLUS = r'\+\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
@@ -48,6 +48,8 @@ t_EQUALEQUAL = r'=='
 t_PRINT = r'print'
 t_FOR = r'for'
 t_DOUBLEQUOTE = r'\"'
+t_LBRACE  = r'\{'
+t_RBRACE  = r'\}'
 
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9_]*'
@@ -109,15 +111,16 @@ def evalInst(p):
 
     if p[0] == 'PRINT':
         if(p[1][0] == 'STRING'):
-            print("CALC> ", p[1][1])
+            print("CALC>", p[1][1])
         else:
-            print("CALC> ", evalExpr(p[1]))
-
+            print("CALC>", evalExpr(p[1]))
 
     if p[0] == 'FOR':
-        for i in range(p[2], p[3]):
-            evalInst(p[3])
-        return
+        evalInst(p[1]) # initialisation
+        while bool(evalExpr(p[2])):
+            evalInst(p[3])  # corps de la boucle
+            evalInst(p[4])  # incrémentation
+
     return 'UNK'
 
 
@@ -131,21 +134,22 @@ def evalExpr(p):
         if p[0] == '-': return evalExpr(p[1]) - evalExpr(p[2])
         if p[0] == '*': return evalExpr(p[1]) * evalExpr(p[2])
         if p[0] == '/': return evalExpr(p[1]) / evalExpr(p[2])
-        if p[0] == '<' : return evalExpr(p[1]) < evalExpr(p[2])
-        if p[0] == '>' : return evalExpr(p[1]) > evalExpr(p[2])
-        if p[0] == '<=' : return evalExpr(p[1] <= evalExpr(p[2]))
-        if p[0] == '>=' : return evalExpr(p[1] >= evalExpr(p[2]))
-        if p[0] == '!=' : return evalExpr(p[1]) != evalExpr(p[2])
-        if p[0] == '==' : return evalExpr(p[1] == evalExpr(p[2]))
+        if p[0] == '<': return evalExpr(p[1]) < evalExpr(p[2])
+        if p[0] == '>': return evalExpr(p[1]) > evalExpr(p[2])
+        if p[0] == '<=': return evalExpr(p[1] <= evalExpr(p[2]))
+        if p[0] == '>=': return evalExpr(p[1] >= evalExpr(p[2]))
+        if p[0] == '!=': return evalExpr(p[1]) != evalExpr(p[2])
+        if p[0] == '==': return evalExpr(p[1] == evalExpr(p[2]))
         if p[0] == '&':  return evalExpr(p[1]) and evalExpr(p[2])
         if p[0] == '|':  return evalExpr(p[1]) or evalExpr(p[2])
+
     return "UNK"
 
 
 def p_start(p):
     ''' start : bloc '''
-    print(p[1])
-    #printTreeGraph(p[1])
+    p[0] = ('start', p[1])
+    printTreeGraph(p[1])
     evalInst(p[1])
 
 def p_bloc(p):
@@ -157,7 +161,6 @@ def p_bloc(p):
         p[0] = ('bloc', p[1], 'empty')
 
 
-
 def p_statement_assign(p):
     'statement : NAME EQUAL expression'
     p[0] = ('ASSIGN', p[1], p[3])
@@ -166,11 +169,15 @@ def p_statement_assign(p):
 def p_statement_print(p):
     """statement : PRINT LPAREN expression RPAREN
                  | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
-
     if isinstance(p[3], str) and p[3].startswith('"') and p[3].endswith('"'):
         p[0] = ('PRINT', ('STRING', p[3].strip('"')))
     else:
         p[0] = ('PRINT', p[3])
+
+
+def p_statement_for(p):
+    'statement : FOR LPAREN statement SEMICOLON expression SEMICOLON statement RPAREN LBRACE bloc RBRACE'
+    p[0] = ('FOR', p[3], p[5], p[7], p[10])
 
 def p_expression_binop(p):
     '''expression : expression PLUS expression
@@ -227,9 +234,15 @@ import ply.yacc as yacc
 yacc.yacc()
 #s = 'print(1+2);x=4;x=x+1;print("hello world");'
 #s = 'print("hello world!");'
-#s = 'x=0; print(x);'
-s='print(1<2 & 2>1);'
+s = 'x=0; print(x);'
+#s='print(1<2 | 2>1);'
+#s = 'print(1<2 & 2<1);'
+#s = 'for(i=0;i<10;i++) { }'
+#s =  'for(x=0;x<10;x=x+1) { print(x); };'
+#s = "for (x=0;x<10;x++){print(x);};"
+#s = 'for (i=0; i<10; i=i+1)print(i);'
 
+#s = 'for (i=0; i<10; i=i+1){print(i);};'
 # while True:
 #     try:
 #         #s = input('calc > ')
