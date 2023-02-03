@@ -166,7 +166,8 @@ def p_statement_assign(p):
 def p_statement_print(p):
     """statement : PRINT LPAREN expression RPAREN
                  | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
-    if isinstance(p[3], str):
+
+    if isinstance(p[3], str) and p[3].startswith('"') and p[3].endswith('"'):
         p[0] = ('PRINT', ('STRING', p[3].strip('"')))
     else:
         p[0] = ('PRINT', p[3])
@@ -224,9 +225,9 @@ def p_error(p):
 import ply.yacc as yacc
 
 yacc.yacc()
-s = 'print(1+2);x=4;x=x+1;'
-#s = 'print("bonjour");'
-#s = 'for(i=0;i<10;i++);'
+#s = 'print(1+2);x=4;x=x+1;print("hello world");'
+#s = 'print("hello world!");'
+s = 'x=0; print(x);'
 
 # while True:
 #     try:
