@@ -105,11 +105,11 @@ def evalInst(p):
         evalInst(p[2])
         return
 
-    if p[0] == 'ASSIGN':
+    if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
 
 
-    if p[0] == 'PRINT':
+    if p[0] == 'print':
         if(p[1][0] == 'STRING'):
             print("CALC>", p[1][1])
         else:
@@ -127,6 +127,7 @@ def evalInst(p):
 names = {}
 
 def evalExpr(p):
+    print("evalExpr de ", p)
     if type(p) is int: return p
     if type(p) is str: return names[p]
     if type(p) is tuple:
@@ -163,16 +164,16 @@ def p_bloc(p):
 
 def p_statement_assign(p):
     'statement : NAME EQUAL expression'
-    p[0] = ('ASSIGN', p[1], p[3])
+    p[0] = ('assign', p[1], p[3])
 
 
 def p_statement_print(p):
     """statement : PRINT LPAREN expression RPAREN
                  | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
     if isinstance(p[3], str) and p[3].startswith('"') and p[3].endswith('"'):
-        p[0] = ('PRINT', ('STRING', p[3].strip('"')))
+        p[0] = ('print', ('STRING', p[3].strip('"')))
     else:
-        p[0] = ('PRINT', p[3])
+        p[0] = ('print', p[3])
 
 
 def p_statement_for(p):
@@ -233,8 +234,9 @@ import ply.yacc as yacc
 
 yacc.yacc()
 #s = 'print(1+2);x=4;x=x+1;print("hello world");'
+s='print(1+2);x=4;x=x+1;'
 #s = 'print("hello world!");'
-s = 'x=0; print(x);'
+#s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
 #s = 'print(1<2 & 2<1);'
 #s =  'for(x=0;x<10;x=x+1) { print(x); };'
