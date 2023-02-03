@@ -237,12 +237,13 @@ yacc.yacc()
 s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
 #s = 'print(1<2 & 2<1);'
-#s = 'for(i=0;i<10;i++) { }'
 #s =  'for(x=0;x<10;x=x+1) { print(x); };'
-#s = "for (x=0;x<10;x++){print(x);};"
-#s = 'for (i=0; i<10; i=i+1)print(i);'
-
 #s = 'for (i=0; i<10; i=i+1){print(i);};'
+
+# doesn't work with the current grammar
+#s = 'for(i=0;i<10;i+=1) { }'
+#s = "for (x=0;x<10;x++){print(x);};"
+
 # while True:
 #     try:
 #         #s = input('calc > ')
