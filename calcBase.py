@@ -137,8 +137,8 @@ def evalExpr(p):
         if p[0] == '>=' : return evalExpr(p[1] >= evalExpr(p[2]))
         if p[0] == '!=' : return evalExpr(p[1]) != evalExpr(p[2])
         if p[0] == '==' : return evalExpr(p[1] == evalExpr(p[2]))
-        if p[0] == '&' : return evalExpr(p[[1]]) and evalExpr(p[2])
-        if p[0] == '|' : return evalExpr(p[[1]]) or evalExpr(p[2])
+        if p[0] == '&':  return evalExpr(p[1]) and evalExpr(p[2])
+        if p[0] == '|':  return evalExpr(p[1]) or evalExpr(p[2])
     return "UNK"
 
 
