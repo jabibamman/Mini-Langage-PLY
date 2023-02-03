@@ -227,7 +227,8 @@ import ply.yacc as yacc
 yacc.yacc()
 #s = 'print(1+2);x=4;x=x+1;print("hello world");'
 #s = 'print("hello world!");'
-s = 'x=0; print(x);'
+#s = 'x=0; print(x);'
+s='print(1<2 & 2>1);'
 
 # while True:
 #     try:
