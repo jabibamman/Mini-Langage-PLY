@@ -4,7 +4,6 @@ Author : Vincent Genin ESGI-3AL 2018
 '''
 import platform
 import uuid
-
 import graphviz as gv
 
 
