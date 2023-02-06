@@ -24,7 +24,7 @@ def addNode(graph, t):
 
     graph.node(str(myId), label=str(t[0]))
     for i in range(1, len(t)):
-        if (platform.system() in ['Linux', 'Darwin']):
+        if platform.system() in ['Linux', 'Darwin'] :
             # Pour macos et linux
             graph.edge(str(myId), str(addNode(graph, t[i])))
         else:
