@@ -11,6 +11,7 @@ reserved = {
     'print': 'PRINT',
     'for': 'FOR',
     'if': 'IF',
+    'else': 'ELSE',
 }
 
 tokens = [
@@ -126,8 +127,12 @@ def evalInst(p):
     if p[0] == 'if':
         if(evalExpr(p[1])):
             evalInst(p[2])
-
-
+    if p[0] == 'if-else':
+        print("else")
+        if(evalExpr(p[1])):
+            evalInst(p[2])
+        else:
+            evalInst(p[3])
     return 'UNK'
 
 
@@ -191,7 +196,11 @@ def p_statement_for(p):
 def p_statement_if(p):
     'statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE'
     p[0] = ('if', p[3], p[6])
+    # TODO: else
 
+def p_statement_if_else(p):
+    'statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE ELSE LBRACE bloc RBRACE'
+    p[0] = ('if-else', p[3], p[6], p[10])
 
 def p_expression_binop(p):
     '''expression : expression PLUS expression
@@ -256,7 +265,8 @@ yacc.yacc()
 #s = 'for (i=0; i<10; i=i+1){print(i);};'
 
 # i'm working on this one
-s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
+#s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
+s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
 
 # doesn't work with the current grammar
 #s = 'for(i=0;i<10;i+=1) { }'
