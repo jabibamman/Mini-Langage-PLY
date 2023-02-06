@@ -9,7 +9,8 @@ import ply.yacc
 
 reserved = {
     'print': 'PRINT',
-    'for': 'FOR'
+    'for': 'FOR',
+    'if': 'IF',
 }
 
 tokens = [
@@ -47,6 +48,7 @@ t_DIFFERENT = r'!='
 t_EQUALEQUAL = r'=='
 t_PRINT = r'print'
 t_FOR = r'for'
+t_IF = r'if'
 t_DOUBLEQUOTE = r'\"'
 t_LBRACE  = r'\{'
 t_RBRACE  = r'\}'
@@ -121,6 +123,11 @@ def evalInst(p):
             evalInst(p[3])  # corps de la boucle
             evalInst(p[4])  # incrémentation
 
+    if p[0] == 'if':
+        if(evalExpr(p[1])):
+            evalInst(p[2])
+
+
     return 'UNK'
 
 
@@ -150,7 +157,7 @@ def evalExpr(p):
 def p_start(p):
     ''' start : bloc '''
     p[0] = ('start', p[1])
-    printTreeGraph(p[1])
+    #printTreeGraph(p[1])
     evalInst(p[1])
 
 def p_bloc(p):
@@ -179,6 +186,11 @@ def p_statement_print(p):
 def p_statement_for(p):
     'statement : FOR LPAREN statement SEMICOLON expression SEMICOLON statement RPAREN LBRACE bloc RBRACE'
     p[0] = ('for', p[3], p[5], p[7], p[10])
+
+
+def p_statement_if(p):
+    'statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE'
+    p[0] = ('if', p[3], p[6])
 
 
 def p_expression_binop(p):
@@ -240,8 +252,11 @@ yacc.yacc()
 #s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
 #s = 'print(1<2 & 2<1);'
-s =  'for(x=0;x<10;x=x+1) { print(x); };'
+#s =  'for(x=0;x<10;x=x+1) { print(x); };'
 #s = 'for (i=0; i<10; i=i+1){print(i);};'
+
+# i'm working on this one
+s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
 
 # doesn't work with the current grammar
 #s = 'for(i=0;i<10;i+=1) { }'
