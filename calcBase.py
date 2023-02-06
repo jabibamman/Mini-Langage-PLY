@@ -115,7 +115,7 @@ def evalInst(p):
         else:
             print("CALC>", evalExpr(p[1]))
 
-    if p[0] == 'FOR':
+    if p[0] == 'for':
         evalInst(p[1]) # initialisation
         while bool(evalExpr(p[2])):
             evalInst(p[3])  # corps de la boucle
@@ -178,7 +178,8 @@ def p_statement_print(p):
 
 def p_statement_for(p):
     'statement : FOR LPAREN statement SEMICOLON expression SEMICOLON statement RPAREN LBRACE bloc RBRACE'
-    p[0] = ('FOR', p[3], p[5], p[7], p[10])
+    p[0] = ('for', p[3], p[5], p[7], p[10])
+
 
 def p_expression_binop(p):
     '''expression : expression PLUS expression
@@ -234,12 +235,12 @@ import ply.yacc as yacc
 
 yacc.yacc()
 #s = 'print(1+2);x=4;x=x+1;print("hello world");'
-s='print(1+2);x=4;x=x+1;'
+#s='print(1+2);x=4;x=x+1;'
 #s = 'print("hello world!");'
 #s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
 #s = 'print(1<2 & 2<1);'
-#s =  'for(x=0;x<10;x=x+1) { print(x); };'
+s =  'for(x=0;x<10;x=x+1) { print(x); };'
 #s = 'for (i=0; i<10; i=i+1){print(i);};'
 
 # doesn't work with the current grammar
