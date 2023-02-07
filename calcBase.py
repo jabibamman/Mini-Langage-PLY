@@ -65,7 +65,7 @@ def t_NUMBER(t):
 
 
 def t_STRING(t):
-    r'\".*\"'
+    r'\".*?\"'
     t.value = str(t.value)
     t.type = reserved.get(t.value, 'STRING')
     return t
@@ -111,10 +111,8 @@ def evalInst(p):
 
 
     if p[0] == 'print':
-        if(p[1][0] == 'STRING'):
-            print("CALC>", p[1][1])
-        else:
-            print("CALC>", evalExpr(p[1]))
+        print("CALC>", evalExpr(p[1]))
+
 
     if p[0] == 'for':
         evalInst(p[1]) # initialisation
@@ -127,7 +125,7 @@ def evalInst(p):
             evalInst(p[2])
 
 
-    if p[0] == 'if-else':
+    if p[0] == 'ifElse':
         if(evalExpr(p[1])):
             evalInst(p[2])
         else:
@@ -145,7 +143,11 @@ names = {}
 def evalExpr(p):
     print("evalExpr de ", p)
     if type(p) is int: return p
-    if type(p) is str: return names[p]
+    if type(p) is str:
+        if p.startswith('"'):
+            return p[1:-1]
+        else:
+            return names[p]
     if type(p) is tuple:
         if p[0] == '+': return evalExpr(p[1]) + evalExpr(p[2])
         if p[0] == '-': return evalExpr(p[1]) - evalExpr(p[2])
@@ -166,8 +168,10 @@ def evalExpr(p):
 def p_start(p):
     ''' start : bloc '''
     p[0] = ('start', p[1])
-    #printTreeGraph(p[1])
+    #print(p[0])
+    printTreeGraph(p[0])
     evalInst(p[1])
+
 
 def p_bloc(p):
     '''bloc : bloc statement SEMICOLON
@@ -184,12 +188,8 @@ def p_statement_assign(p):
 
 
 def p_statement_print(p):
-    """statement : PRINT LPAREN expression RPAREN
-                 | PRINT LPAREN DOUBLEQUOTE STRING DOUBLEQUOTE RPAREN"""
-    if isinstance(p[3], str) and p[3].startswith('"') and p[3].endswith('"'):
-        p[0] = ('print', ('STRING', p[3].strip('"')))
-    else:
-        p[0] = ('print', p[3])
+    """statement : PRINT LPAREN expression RPAREN"""
+    p[0] = ('print', p[3])
 
 
 def p_statement_for(p):
@@ -202,14 +202,16 @@ def p_statement_while(p):
     p[0] = ('while', p[3], p[6])
 
 
-def p_statement_if(p):
-    'statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE'
-    p[0] = ('if', p[3], p[6])
-    # TODO: else
-
 def p_statement_if_else(p):
-    'statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE ELSE LBRACE bloc RBRACE'
-    p[0] = ('if-else', p[3], p[6], p[10])
+    '''statement : IF LPAREN expression RPAREN LBRACE bloc RBRACE ELSE LBRACE bloc RBRACE
+    | IF LPAREN expression RPAREN LBRACE bloc RBRACE'''
+    if len(p) == 12:
+        p[0] = ('ifElse', p[3], p[6], p[10])
+    else:
+        p[0] = ('if', p[3], p[6])
+
+
+
 
 def p_expression_binop(p):
     '''expression : expression PLUS expression
@@ -264,20 +266,28 @@ def p_error(p):
 import ply.yacc as yacc
 
 yacc.yacc()
-#s = 'print(1+2);x=4;x=x+1;print("hello world");'
+
+# ! PRINT!
+s = 'print(1+2);x=4;x=x+1;print("hello world");'
 #s='print(1+2);x=4;x=x+1;'
 #s = 'print("hello world!");'
 #s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
 #s = 'print(1<2 & 2<1);'
-#s =  'for(x=0;x<10;x=x+1) { print(x); };'
-#s = 'for (i=0; i<10; i=i+1){print(i);};'
-s = 'x=0; while(x<10) { print(x); x=x+1; };'
 
-# i'm working on this one
+# ! BOUCLES !
+#s =  'for(x=0;x<10;x=x+1) { print(x); };'
+#s = 'for (i=0; i<=10; i=i+1){print(i);};'
+#s = 'x=0; while(x<10) { print(x); x=x+1; };'
+# Fibonacci - 10 premiers termes / Doesn't work with the current grammar
+#s = 'a=0; b=1; cpt=0; while(cpt <= 10){if(cpt < 1){c=cpt}else{c=a+b;a=b;b=c;};'
+
+# ! IF ELSE !
 #s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
 #s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
-
+#s = 'x=1;y=2; if (1<2){ print(x); } else { print(y); };'
+#s='if(1<2){print("1<2");}else{print("1>=2"); };'
+# s = 'x=1; y=1;if (x==y){ print("x est égal à y"); };'
 # doesn't work with the current grammar
 #s = 'for(i=0;i<10;i+=1) { }'
 #s = "for (x=0;x<10;x++){print(x);};"
