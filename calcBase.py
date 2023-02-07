@@ -10,6 +10,7 @@ import ply.yacc
 reserved = {
     'print': 'PRINT',
     'for': 'FOR',
+    'while': 'WHILE',
     'if': 'IF',
     'else': 'ELSE',
 }
@@ -49,6 +50,7 @@ t_DIFFERENT = r'!='
 t_EQUALEQUAL = r'=='
 t_PRINT = r'print'
 t_FOR = r'for'
+t_WHILE = r'while'
 t_IF = r'if'
 t_DOUBLEQUOTE = r'\"'
 t_LBRACE  = r'\{'
@@ -124,15 +126,21 @@ def evalInst(p):
             evalInst(p[3])  # corps de la boucle
             evalInst(p[4])  # incrémentation
 
-    if p[0] == 'if':
-        if(evalExpr(p[1])):
+    if p[0] == 'while':
+        while bool(evalExpr(p[1])):
             evalInst(p[2])
+
+
     if p[0] == 'if-else':
-        print("else")
         if(evalExpr(p[1])):
             evalInst(p[2])
         else:
             evalInst(p[3])
+
+    if p[0] == 'if':
+        if(evalExpr(p[1])):
+            evalInst(p[2])
+
     return 'UNK'
 
 
@@ -191,6 +199,11 @@ def p_statement_print(p):
 def p_statement_for(p):
     'statement : FOR LPAREN statement SEMICOLON expression SEMICOLON statement RPAREN LBRACE bloc RBRACE'
     p[0] = ('for', p[3], p[5], p[7], p[10])
+
+
+def p_statement_while(p):
+    'statement : WHILE LPAREN expression RPAREN LBRACE bloc RBRACE'
+    p[0] = ('while', p[3], p[6])
 
 
 def p_statement_if(p):
@@ -263,10 +276,11 @@ yacc.yacc()
 #s = 'print(1<2 & 2<1);'
 #s =  'for(x=0;x<10;x=x+1) { print(x); };'
 #s = 'for (i=0; i<10; i=i+1){print(i);};'
+s = 'x=0; while(x<10) { print(x); x=x+1; };'
 
 # i'm working on this one
 #s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
-s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
+#s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
 
 # doesn't work with the current grammar
 #s = 'for(i=0;i<10;i+=1) { }'
