@@ -29,6 +29,7 @@ precedence = (
     ('nonassoc', 'EQUALEQUAL', 'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT'),
     ('left', 'PLUS', 'MINUS'),
     ('left', 'TIMES', 'DIVIDE'),
+    ('right', 'UMINUS'),
 )
 
 # Tokens
@@ -230,7 +231,7 @@ def p_expression_binop(p):
 
 
 def p_expression_uminus(p):
-    'expression : MINUS expression'
+    'expression : MINUS expression %prec UMINUS'
     p[0] = -p[2]
 
 
@@ -270,6 +271,7 @@ yacc.yacc()
 # ! PRINT!
 s = 'print(1+2);x=4;x=x+1;print("hello world");'
 #s='print(1+2);x=4;x=x+1;'
+#s='cpt=0;print(cpt);cpt=cpt+1;print(cpt);'
 #s = 'print("hello world!");'
 #s = 'x=0; print(x);'
 #s='print(1<2 | 2>1);'
@@ -279,8 +281,8 @@ s = 'print(1+2);x=4;x=x+1;print("hello world");'
 #s =  'for(x=0;x<10;x=x+1) { print(x); };'
 #s = 'for (i=0; i<=10; i=i+1){print(i);};'
 #s = 'x=0; while(x<10) { print(x); x=x+1; };'
-# Fibonacci - 10 premiers termes / Doesn't work with the current grammar
-#s = 'a=0; b=1; cpt=0; while(cpt <= 10){if(cpt < 1){c=cpt}else{c=a+b;a=b;b=c;};'
+# Fibonacci - 10 premiers termes
+#s = 'a=0; b=1; cpt=0; while(cpt <= 10){if(cpt < 2){c=cpt;}else{c=a+b; a=b; b=c;}; print(c); cpt=cpt+1;};'
 
 # ! IF ELSE !
 #s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
