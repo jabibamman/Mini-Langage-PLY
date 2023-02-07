@@ -16,11 +16,11 @@ reserved = {
 }
 
 tokens = [
-             'NUMBER', 'MINUS',
-             'PLUS', 'TIMES', 'DIVIDE',
-             'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
-             'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING",
-             'COMMENT'
+         'NUMBER', 'MINUS',
+         'PLUS', 'TIMES', 'DIVIDE',
+         'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'AND', 'OR', 'SEMICOLON', 'NAME', 'EQUAL', 'EQUALEQUAL',
+         'INFERIOR', 'SUPERIOR', 'INFERIOR_EQUAL', 'SUPERIOR_EQUAL', 'DIFFERENT', "DOUBLEQUOTE", "STRING",
+         'COMMENT'
          ] + list(reserved.values())
 
 precedence = (
@@ -48,10 +48,6 @@ t_INFERIOR_EQUAL = r'<='
 t_SUPERIOR_EQUAL = r'>='
 t_DIFFERENT = r'!='
 t_EQUALEQUAL = r'=='
-t_PRINT = r'print'
-t_FOR = r'for'
-t_WHILE = r'while'
-t_IF = r'if'
 t_DOUBLEQUOTE = r'\"'
 t_LBRACE  = r'\{'
 t_RBRACE  = r'\}'
