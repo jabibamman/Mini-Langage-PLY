@@ -11,12 +11,12 @@ def printTreeGraph(t):
     graph = gv.Digraph(format='pdf')
     graph.attr('node', shape='circle')
     addNode(graph, t)
-    graph.render(filename='img/graph') #Pour Sauvegarder
-    graph.view() # Pour afficher
+    graph.render(filename='img/graph')  # Pour Sauvegarder
+    graph.view()  # Pour afficher
 
 
 def addNode(graph, t):
-    myId = uuid.uuid4() # Pour générer un id unique
+    myId = uuid.uuid4()  # Pour générer un id unique
 
     if type(t) != tuple:
         graph.node(str(myId), label=str(t))
@@ -24,11 +24,10 @@ def addNode(graph, t):
 
     graph.node(str(myId), label=str(t[0]))
     for i in range(1, len(t)):
-        if platform.system() in ['Linux', 'Darwin'] :
+        if platform.system() in ['Linux', 'Darwin']:
             # Pour macos et linux
             graph.edge(str(myId), str(addNode(graph, t[i])))
         else:
             graph.edge(str(myId), str(addNode(graph, t[i])), arrowsize='0')
 
     return myId
-
