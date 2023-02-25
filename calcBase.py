@@ -62,9 +62,10 @@ t_COMMA = r','
 
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9_]*'
+    print("t_NAME", t.value)
     t.type = reserved.get(t.value, 'NAME')
+    print(names)
     return t
-
 
 def t_NUMBER(t):
     r'\d+'
@@ -115,35 +116,41 @@ def evalInst(p):
         print("inst non tuple")
         return
 
-    if p[0] == 'main' and p[1][0] == 'bloc':
-        evalInst(p[1][0])
-        evalInst(p[1][1])
+    if p[0] == 'main':
+        evalInst(p[1])
+
+    if p[0] == 'bloc':
+        evalInst(p[1])
+        evalInst(p[2])
         return
 
+
     if p[0] == 'function':
-        # p[1] = function name
-        # p[2][1] = args
-        # p[3] = body
+        # p[1][0] = function name, p[1][1] = args, p[1][2] = body
         function = dict()
-        function_name = p[1]
+        function_name = p[1][0]
         args = list()
 
-        for arg in p[2][1]:
+        for arg in p[1][1]:
             if arg != 'args':
-                args.append(arg[0])
+                args.append(arg[1])
 
         function['args'] = args
-        function['body'] = p[3]
-        functions[function_name] = function
+        print("function['args'] = ", function['args'])
+        function['body'] = p[1][2]
+        names[function_name] = function
 
+        print("function ", function_name, " created")
+        print("names", names)
         # PAS SUR DU FONCTIONNEMENT
-        evalExpr(p[3], function_name)
+#        evalExpr(p[3], function_name)
 
         # DEBUG
-        print(functions)
+        print(names)
 
-    # pas fonctinonel tant que le nom de la fonction n'est pas reconnu..
+    # pas fonctinonel tant que le nom de la fonction n'est pas reconnu.. (donc on ne rentre pas dans cette condition)
     if p[0] == 'call':
+        print("on test call PAS OKr")
         function = functions.get(p[1])
         arg = p[2]
         if len(arg) == 3:
@@ -233,7 +240,7 @@ def evalExpr(p, function_name=None):
             return p[1:-1]
         else:
             # DEBUG
-            print("names", names)
+            print("names PAS OK", names)
 
             if p not in names:
                 raise NameError(f"'{p}' is not defined")
@@ -241,6 +248,7 @@ def evalExpr(p, function_name=None):
 
     # PAS SUR DU FONCTIONNEMENT
     if function_name is not None:
+        print("function_name, PAS OK", function_name)
         if p not in names: names[function_name] = p
         return names[function_name]
 
@@ -266,7 +274,7 @@ def p_prog(p):
     ''' PROG : type '''
     p[0] = ('PROG', p[1])
     # print(p[0])
-    # printTreeGraph(p[0])
+    #printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -307,9 +315,9 @@ def p_args(p):
     print("on test args OK")
 
     if len(p) == 2:
-        p[0] = ('args', p[1])
+        p[0] = ('args', p[1], 'empty')
     else:
-        p[0] = ('args', p[1], p[3])
+        p[0] = ('args', p[1], p[3], 'empty')
 
 
 def p_statement_declare_function(p):
@@ -317,13 +325,12 @@ def p_statement_declare_function(p):
     # DEBUG
     print("on test function OK")
 
-    p[0] = ('function', p[2], ('args', p[4]), p[7])
+    p[0] = ('function', (p[2], ('args', p[4]), p[7]), 'empty')
 
 
 def p_statement_call_function(p):
     '''statement : NAME LPAREN args RPAREN'''
-    # DEBUG
-    print("on test call PAS OK")
+    print("on test call PAS OK")     # DEBUG
 
     p[0] = ('call', p[1], ('args', p[3]))
 
@@ -416,7 +423,7 @@ yacc.yacc()
 # s='print(1+2);x=4;x=x+1;'
 # s='cpt=0;print(cpt);cpt=cpt+1;print(cpt);'
 # s = 'print("hello world!");'
-# s = 'x=0; print(x);'
+s = 'x=0; print(x);'
 #s = 'print(1<2 | 2>1);'
 # s = 'print(1<2 & 2<1);'
 
@@ -446,14 +453,13 @@ yacc.yacc()
 # x = sum(1, 2);
 # print(x);
 # '''
-s = '''
-function carre(a) {
-    print(a*a);
-}
-
-carre(2);
-
-'''
+# s = '''
+# function carre(a) {
+#     print(a*a);
+# }
+#
+# carre(2);
+# '''
 # for (i=0;i<10;i=i+1) {
 #     carre(i);
 # }
