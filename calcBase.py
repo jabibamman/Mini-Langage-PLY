@@ -419,25 +419,25 @@ import ply.yacc as yacc
 yacc.yacc()
 
 # ! PRINT!
-# s = 'print(1+2);x=4;x=x+1;print("hello world");'
-# s='print(1+2);x=4;x=x+1;'
-# s='cpt=0;print(cpt);cpt=cpt+1;print(cpt);'
+#s = 'print(1+2);x=4;x=x+1;print("hello world");'
+#s='print(1+2);x=4;x=x+1;'
+#s='cpt=0;print(cpt);cpt=cpt+1;print(cpt);'
 # s = 'print("hello world!");'
-s = 'x=0; print(x);'
+#s = 'x=0; print(x);'
 #s = 'print(1<2 | 2>1);'
 # s = 'print(1<2 & 2<1);'
 
 # ! BOUCLES !
-# s =  'for(x=0;x<10;x=x+1) { print(x); };'
-# s = 'for (i=0; i<=10; i=i+1){print(i);};'
-# s = 'x=0; while(x<10) { print(x); x=x+1; };'
+#s =  'for(x=0;x<10;x=x+1) { print(x); };'
+#s = 'for (i=0; i<=10; i=i+1){print(i);};' # ATTENTION probmlème acex le '<='
+#s = 'x=0; while(x<10) { print(x); x=x+1; };'
 # Fibonacci - 10 premiers termes
 # s = 'a=0; b=1; cpt=0; while(cpt <= 10){if(cpt < 2){c=cpt;}else{c=a+b; a=b; b=c;}; print(c); cpt=cpt+1;};'
 
 # ! IF ELSE !
-# s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
-# s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
-# s = 'x=1;y=2; if (1<2){ print(x); } else { print(y); };'
+#s = 'if (1<2){ print("1 est bien inférieur à 2"); };'
+#s = 'if (1>2){ print("1 est bien inférieur à 2"); } else { print("1 n\'est pas supérieur à 2"); };'
+#s = 'x=1;y=2; if (1<2){ print(x); } else { print(y); };'
 # s='if(1<2){print("1<2");}else{print("1>=2"); };'
 # s = 'x=1; y=1;if (x==y){ print("x est égal à y"); };'
 # doesn't work with the current grammar
@@ -453,13 +453,12 @@ s = 'x=0; print(x);'
 # x = sum(1, 2);
 # print(x);
 # '''
-# s = '''
-# function carre(a) {
-#     print(a*a);
-# }
-#
-# carre(2);
-# '''
+s = '''
+function carre(a) {
+    print(a*a);
+}   
+carre(2);
+'''
 # for (i=0;i<10;i=i+1) {
 #     carre(i);
 # }
