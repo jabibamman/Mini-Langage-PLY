@@ -62,9 +62,7 @@ t_COMMA = r','
 
 def t_NAME(t):
     r'[a-zA-Z_][a-zA-Z_0-9_]*'
-    print("t_NAME", t.value)
     t.type = reserved.get(t.value, 'NAME')
-    print(names)
     return t
 
 def t_NUMBER(t):
@@ -128,75 +126,46 @@ def evalInst(p):
     if p[0] == 'function':
         # p[1][0] = function name, p[1][1] = args, p[1][2] = body
         function = dict()
-        function_name = p[1][0]
-        args = list()
 
-        for arg in p[1][1]:
-            if arg != 'args':
-                args.append(arg[1])
-
-        function['args'] = args
-        print("function['args'] = ", function['args'])
-        function['body'] = p[1][2]
-        names[function_name] = function
-
-        print("function ", function_name, " created")
-        print("names", names)
-        # PAS SUR DU FONCTIONNEMENT
-#        evalExpr(p[3], function_name)
+        # si il y a des parametre
+        if p[2][1] != 'empty':
+            args = list()
+            t = p[2][1]
+            while t is tuple and len(t) == 2:
+                args.append(t[0])
+                print("t[1]", t[1])
+                t = t[1]
+            if t is not tuple():
+                args.append(t)
+            function['args'] = args
+        function['body'] = p[3]
+        functions[p[1]] = function
 
         # DEBUG
         print(names)
 
     # pas fonctinonel tant que le nom de la fonction n'est pas reconnu.. (donc on ne rentre pas dans cette condition)
     if p[0] == 'call':
-        print("on test call PAS OKr")
-        function = functions.get(p[1])
-        arg = p[2]
-        if len(arg) == 3:
-            args = list()
-            arg = p[2]
+        function = functions[p[1]]
+        if len(p) == 3:
+            call_args = list()
             while arg is tuple() and len(arg) == 3:
-                args.append(arg[0])
+                call_args.append(arg[0])
                 arg = arg[2]
 
             if arg is not tuple():
-                args.append(arg[0])
+                call_args.append(arg[0])
 
             if dict(function).get('args', []) is None \
-                    or len(function.get('args', [])) > len(args) \
-                    or len(function.get('args', [])) < len(args):
+                    or len(function.get('args', [])) > len(call_args) \
+                    or len(function.get('args', [])) < len(call_args):
                 raise Exception(p[1] + " takes " + str(len(function.get('args', []))) + " arguments but " + str(
-                    len(args)) + " were given")
+                    len(call_args)) + " were given")
 
             for k in range(function['args']):
-                names[function.get('args', [])[k]] = args[k]
+                names[function['args'][k]] = call_args[k]
 
-            # DEBUG
-            print(functions)
-            print(names)
-
-            evalInst(function.get('body', []))
-
-    # TODO : Delete this
-    # if p[0] == 'function':
-    #     print("[L.128] function", p[1], p[2], p[3])
-    #     function_name = p[1]
-    #     function_params = p[2]
-    #     function_body = p[3]
-    #     functions[function_name] = (function_params, function_body)
-    #     names[function_name] = (function_params, function_body)
-    #
-    #
-    #
-    # if p[0] == 'call':
-    #     function_name = p[1]
-    #     arg_value = evalExpr(p[3], function_name)
-    #     function = functions.get(function_name)
-    #     if function:
-    #         function_params, function_body = function
-    #         names[function_params] = arg_value
-    #         evalInst(function_body)
+        evalInst(function['body'])
 
     if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
@@ -230,25 +199,16 @@ def evalInst(p):
 def evalExpr(p, function_name=None):
     print("evalExpr de ", p)
     if type(p) is int: return p
-    # DEBUG
-    print(f"type de function_name {type(function_name)}")
     if type(p) is str:
-        # DEBUG
-        print("p", p)
-
         if p.startswith('"'):
             return p[1:-1]
         else:
-            # DEBUG
-            print("names PAS OK", names)
-
             if p not in names:
                 raise NameError(f"'{p}' is not defined")
             return names[p]
 
     # PAS SUR DU FONCTIONNEMENT
     if function_name is not None:
-        print("function_name, PAS OK", function_name)
         if p not in names: names[function_name] = p
         return names[function_name]
 
@@ -274,14 +234,13 @@ def p_prog(p):
     ''' PROG : type '''
     p[0] = ('PROG', p[1])
     # print(p[0])
-    #printTreeGraph(p[0])
+    printTreeGraph(p[0])
     evalInst(p[1])
 
 
 # type = main | function
 def p_type(p):
-    '''type : main
-            | function'''
+    '''type : main'''
     p[0] = p[1]
 
 
@@ -299,40 +258,35 @@ def p_bloc(p):
         p[0] = ('bloc', p[1], 'empty')
 
 
-# TODO: supprimer car juste pour dev la grammaire et le parser
-# function carre(a) {
-#     print(a*a);
-# };
-#
-# for (i=0;i<10;i=i+1) {
-#     carre(i);
-# };
-
 def p_args(p):
     '''args : NAME
             | args COMMA NAME'''
-    # DEBUG
-    print("on test args OK")
-
     if len(p) == 2:
-        p[0] = ('args', p[1], 'empty')
+        p[0] = ('args', p[1]) #, 'empty')
     else:
-        p[0] = ('args', p[1], p[3], 'empty')
+        p[0] = ('args', p[1], p[3])# 'empty')
 
 
 def p_statement_declare_function(p):
-    '''function : FUNCTION NAME LPAREN args RPAREN LBRACE bloc RBRACE'''
+    '''statement : FUNCTION NAME LPAREN RPAREN LBRACE bloc RBRACE
+               |  FUNCTION NAME LPAREN args RPAREN LBRACE bloc RBRACE'''
     # DEBUG
     print("on test function OK")
-
-    p[0] = ('function', (p[2], ('args', p[4]), p[7]), 'empty')
+    if len(p) == 8:
+        #p[6] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
+        p[0] = ('function', p[2], ('args', 'empty'), p[6]) #, 'empty')
+    elif len(p) == 9:
+        #p[7] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
+        p[0] = ('function', p[2], ('args', p[4]), p[7]) #, 'empty')
 
 
 def p_statement_call_function(p):
-    '''statement : NAME LPAREN args RPAREN'''
-    print("on test call PAS OK")     # DEBUG
-
-    p[0] = ('call', p[1], ('args', p[3]))
+    '''statement : NAME LPAREN RPAREN
+                |  NAME LPAREN args RPAREN'''
+    if len(p) == 4:
+        p[0] = ('call', p[1])
+    elif len(p) == 5:
+        p[0] = ('call', p[1], ('args', p[3]))
 
 
 def p_statement_assign(p):
@@ -429,7 +383,7 @@ yacc.yacc()
 
 # ! BOUCLES !
 #s =  'for(x=0;x<10;x=x+1) { print(x); };'
-#s = 'for (i=0; i<=10; i=i+1){print(i);};' # ATTENTION probmlème acex le '<='
+s = 'for (i=0; i<=10; i=i+1){print(i);};' # ATTENTION probmlème acex le '<='
 #s = 'x=0; while(x<10) { print(x); x=x+1; };'
 # Fibonacci - 10 premiers termes
 # s = 'a=0; b=1; cpt=0; while(cpt <= 10){if(cpt < 2){c=cpt;}else{c=a+b; a=b; b=c;}; print(c); cpt=cpt+1;};'
@@ -453,16 +407,15 @@ yacc.yacc()
 # x = sum(1, 2);
 # print(x);
 # '''
-s = '''
-function carre(a) {
-    print(a*a);
-}   
-carre(2);
-'''
-# for (i=0;i<10;i=i+1) {
-#     carre(i);
-# }
 
+# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions sans args /!\
+# s = '''
+# function carre() {
+#     print("on test");
+# };
+# carre();
+# print("on test AUSSI");
+# '''
 # while True:
 #     try:
 #         #s = input('calc > ')
