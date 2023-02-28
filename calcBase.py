@@ -12,10 +12,10 @@ reserved = {
 
 # List of token names
 tokens = [
-    'NAME','NUMBER',
+    'NAME','NUMBER','STRING',
     'PLUS','MINUS','TIMES','DIVIDE',
     'LPAREN','RPAREN','LCURLY','RCURLY',
-    'SEMICOLON',
+    'SEMICOLON','QUOTE',
     'AND','OR','LOWER','HIGHER','LOWER_EQUAL','HIGHER_EQUAL',
     'EQUAL','EQUALS','INEQUAL'
  ] + list(reserved.values())
@@ -140,6 +140,15 @@ def t_NUMBER(t):
         t.value = 0
     return t
 
+def t_STRING(t):
+    r'"[^"\t\n\r\f\v]*"'
+    try:
+        t.value = str(t.value)
+    except ValueError:
+        print("String value too large %d", t.value)
+        t.value = ''
+    return t
+
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
@@ -179,23 +188,18 @@ def p_statement_if(p):
     elif len(p)==12 :
         p[0] = ('if', p[3], p[6], p[10])
     else :
-        p[0] = ('if', p[3], p[6], p[7])
-
-# def p_statement_if_else(p):
-#     'inst : IF LPAREN expression RPAREN LCURLY linst RCURLY ELSE LCURLY linst RCURLY'
-#     p[0] = ('if',p[3],p[6],p[10])
-#
-# def p_statement_elif(p):
-#     'inst : IF LPAREN expression RPAREN LCURLY linst RCURLY instelif'
-#     p[0] = ('if',p[3],p[6],p[7])
+        p[0] = ('if', p[3], p[6], p[8])
 
 def p_inst_elif(p):
     '''instelif : ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY instelif
+                | ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY ELSE LCURLY linst RCURLY
                 | ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY'''
     if len(p)==10 :
-        p[0] = ('elif',p[4],p[7],p[9])
+        p[0] = ('if',p[4],p[7],p[9])
+    elif len(p)==13 :
+        p[0] = ('if',p[4],p[7],p[11])
     else :
-        p[0] = ('elif',p[4],p[7],'empty')
+        p[0] = ('if',p[4],p[7],'empty')
 
 def p_statement_while(p):
     'inst : WHILE LPAREN expression RPAREN LCURLY linst RCURLY'
@@ -258,6 +262,10 @@ def p_expression_name(p):
     'expression : NAME'
     p[0] = p[1]
 
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
+
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
 
@@ -267,14 +275,16 @@ def p_error(p):
 import ply.yacc as yacc
 yacc.yacc()
 #s='print(1+2);x=4;x=x+1;'
-s='1+2;x=4;if(x==4){x=x+1;}print(x);'
+#s='1+2;x=4;if(x==4){x=x+1;}print(x);'
 #s='x=4;if(x>4){x=x+1;}print(x);'
+#s='x=4; if(x!=4){x=5;} else{x=0;} print(x);'
+s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x==3){print("x vaux 3");} else {print("x ne vaux ni 1 ni 2 ni 3");}'
+#s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
 #s='print(1+2);x=4;x=x+1;print(x);'
 #s='x=4;while(x!=0){x=x-1;}print(x);'
 #s=';;;;;;;;;;;;;;;;;;;'
 #s='for(i=0;i<=10;i=i+1;) {print(i);}'
 #s='for(;;;){}'
-#s='x=4; if(x==4){x=5;} else{x=0;} print(x);'
 #s='i=6; a=0;b=1;c=0;cpt=0; while(cpt<=i) {if(cpt<2) {c=cpt;} else {c=a+b;a=b;b=c;} cpt=cpt+1;} print(c);'
 yacc.parse(s)
 
