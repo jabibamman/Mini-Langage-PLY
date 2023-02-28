@@ -17,7 +17,8 @@ tokens = [
              'LPAREN', 'RPAREN', 'LCURLY', 'RCURLY',
              'SEMICOLON',
              'AND', 'OR', 'LOWER', 'HIGHER', 'LOWER_EQUAL', 'HIGHER_EQUAL',
-             'EQUAL', 'EQUALS', 'INEQUAL'
+             'EQUAL', 'EQUALS', 'INEQUAL',
+             'DOUBLEQUOTE', 'STRING'
          ] + list(reserved.values())
 
 # Characters for tokens
@@ -39,6 +40,7 @@ t_HIGHER_EQUAL = r'\>='
 t_EQUAL = r'='
 t_EQUALS = r'=='
 t_INEQUAL = r'!='
+t_DOUBLEQUOTE = r'"'
 
 # Parsing rules
 precedence = (
@@ -52,6 +54,9 @@ precedence = (
 
 # Variables
 names = {}
+
+# Functions
+functions = {}
 
 # Ignored characters
 t_ignore = " \t"
@@ -130,6 +135,12 @@ def t_NAME(t):
     t.type = reserved.get(t.value, 'NAME')
     return t
 
+
+def t_STRING(t):
+    r'\".*?\"'
+    t.value = str(t.value)
+    t.type = reserved.get(t.value, 'STRING')
+    return t
 
 def t_NUMBER(t):
     r'\d+'
@@ -274,6 +285,9 @@ def p_expression_name(p):
     p[0] = p[1]
 
 
+def p_expression_string(p):
+    'expression : STRING'
+    p[0] = p[1]
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
 
@@ -283,7 +297,9 @@ import ply.yacc as yacc
 
 yacc.yacc()
 # s='print(1+2);x=4;x=x+1;'
-s = '1+2;x=4;if(x==4){x=x+1;}print(x);'
+#s = '1+2;x=4;if(x==4){x=x+1;}print(x);'
+s = 'print(1+2);x=4;x=x+1;print("hello world");'
+#s = 'print("hello world");'
 # s='x=4;if(x>4){x=x+1;}print(x);'
 # s='print(1+2);x=4;x=x+1;print(x);'
 # s='x=4;while(x!=0){x=x-1;}print(x);'
