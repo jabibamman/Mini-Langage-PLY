@@ -236,7 +236,7 @@ def t_STRING(t):
     return t
 
 def t_COMMENT(t):
-    r'//.*|/\*.*?\*/'
+    r'\/\/[^\n]*|\/\*(?:.|\n)*?\*\/'
     pass
 
 def t_newline(t):
@@ -476,9 +476,10 @@ s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x
 #s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
 # a gerer
 s='''
-
-/*print("hello world");*/
-print("test world");
+//print("comment");
+/*print("hello world");
+print("test world");*/
+print("world");
 
 '''
 yacc.parse(s)
