@@ -7,7 +7,9 @@ reserved = {
     'else': 'ELSE',
     'elif': 'ELIF',
     'while': 'WHILE',
-    'for': 'FOR'
+    'for': 'FOR',
+    'function': 'FUNCTION',
+    'return': 'RETURN'
 }
 
 # List of token names
@@ -18,7 +20,7 @@ tokens = [
              'SEMICOLON',
              'AND', 'OR', 'LOWER', 'HIGHER', 'LOWER_EQUAL', 'HIGHER_EQUAL',
              'EQUAL', 'EQUALS', 'INEQUAL',
-             'DOUBLEQUOTE', 'STRING'
+             'DOUBLEQUOTE', 'STRING', 'COMMA'
          ] + list(reserved.values())
 
 # Characters for tokens
@@ -41,6 +43,7 @@ t_EQUAL = r'='
 t_EQUALS = r'=='
 t_INEQUAL = r'!='
 t_DOUBLEQUOTE = r'"'
+t_COMMA = r','
 
 # Parsing rules
 precedence = (
@@ -75,6 +78,50 @@ def evalInst(p):
         evalInst(p[1])
         evalInst(p[2])
         return
+
+    if p[0] == 'function':
+        # p[1][0] = function name, p[1][1] = args, p[1][2] = body
+        function = dict()
+
+        # si il y a des parametre
+        if p[2][1] != 'empty':
+            args = list()
+            t = p[2][1]
+            while t is tuple and len(t) == 2:
+                args.append(t[0])
+                print("t[1]", t[1])
+                t = t[1]
+            if t is not tuple():
+                args.append(t)
+            function['args'] = args
+        function['body'] = p[3]
+        functions[p[1]] = function
+
+        # DEBUG
+        print(names)
+
+    if p[0] == 'call':
+        function = functions[p[1]]
+        if len(p) == 3:
+            call_args = list()
+            while arg is tuple() and len(arg) == 3:
+                call_args.append(arg[0])
+                arg = arg[2]
+
+            if arg is not tuple():
+                call_args.append(arg[0])
+
+            if dict(function).get('args', []) is None \
+                    or len(function.get('args', [])) > len(call_args) \
+                    or len(function.get('args', [])) < len(call_args):
+                raise Exception(p[1] + " takes " + str(len(function.get('args', []))) + " arguments but " + str(
+                    len(call_args)) + " were given")
+
+            for k in range(function['args']):
+                names[function['args'][k]] = call_args[k]
+
+        evalInst(function['body'])
+
 
     if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
@@ -172,7 +219,7 @@ def p_start(p):
     '''start : linst'''
     p[0] = ('start', p[1])
     # print(p[0])
-    # printTreeGraphprintTreeGraph(p[0])
+    # printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -183,6 +230,36 @@ def p_bloc(p):
         p[0] = ('bloc', p[1], p[2])
     else:
         p[0] = ('bloc', p[1], 'empty')
+
+
+def p_args(p):
+    '''args : NAME
+            | args COMMA NAME'''
+    if len(p) == 2:
+        p[0] = ('args', p[1]) #, 'empty')
+    else:
+        p[0] = ('args', p[1], p[3])# 'empty')
+
+
+def p_statement_declare_function(p):
+    '''inst : FUNCTION NAME LPAREN RPAREN LCURLY linst RCURLY
+               |  FUNCTION NAME LPAREN args RPAREN LCURLY linst RCURLY'''
+    if len(p) == 8:
+        #p[6] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
+        p[0] = ('function', p[2], ('args', 'empty'), p[6]) #, 'empty')
+    elif len(p) == 9:
+        #p[7] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
+        p[0] = ('function', p[2], ('args', p[4]), p[7]) #, 'empty')
+
+
+def p_statement_call_function(p):
+    '''inst : NAME LPAREN RPAREN
+                |  NAME LPAREN args RPAREN'''
+    if len(p) == 4:
+        p[0] = ('call', p[1])
+    elif len(p) == 5:
+        p[0] = ('call', p[1], ('args', p[3]))
+
 
 
 def p_statement_if(p):
@@ -308,6 +385,16 @@ s = 'print(1+2);x=4;x=x+1;print("hello world");'
 # s='for(;;;){}'
 # s='x=4; if(x==4){x=5;} else{x=0;} print(x);'
 # s='i=6; a=0;b=1;c=0;cpt=0; while(cpt<=i) {if(cpt<2) {c=cpt;} else {c=a+b;a=b;b=c;} cpt=cpt+1;} print(c);'
+
+# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions sans args /!\
+s = '''
+function carre() {
+    print("on test");
+}
+carre();
+print("on test AUSSI");
+'''
+
 yacc.parse(s)
 
 # while True :
