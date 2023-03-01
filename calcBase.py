@@ -201,15 +201,15 @@ def evalExpr(p):
         if p[0] == 'arg': return p[1]
         op, left, right = p  # décomposition de la paire
         if op == '+': return evalExpr(left) + evalExpr(right)
-        if op == '-': return evalExpr(left) - evalExpr(right)
-        if op == '*': return evalExpr(left) * evalExpr(right)
-        if op == '/': return evalExpr(left) / evalExpr(right)
+        if op == '-': return int(evalExpr(left)) - int(evalExpr(right))
+        if op == '*': return int(evalExpr(left)) * int(evalExpr(right))
+        if op == '/': return int(evalExpr(left)) / int(evalExpr(right))
         if op == '<': return int(evalExpr(left)) < int(evalExpr(right))
         if op == '>': return int(evalExpr(left)) > int(evalExpr(right))
         if op == '<=': return int(evalExpr(left)) <= int(evalExpr(right))
         if op == '>=': return int(evalExpr(left)) >= int(evalExpr(right))
-        if op == '!=': return int(evalExpr(left)) != int(evalExpr(right))
-        if op == '==': return int(evalExpr(left)) == int(evalExpr(right))
+        if op == '!=': return evalExpr(left) != evalExpr(right)
+        if op == '==': return evalExpr(left) == evalExpr(right)
         if op == '&':  return evalExpr(left) and evalExpr(right)
         if op == '|':  return evalExpr(left) or evalExpr(right)
     return "UNK"
@@ -220,14 +220,6 @@ def t_NAME(t):
     t.type = reserved.get(t.value, 'NAME')
     return t
 
-
-def t_STRING(t):
-    r'\".*?\"'
-    t.value = str(t.value)
-    t.type = reserved.get(t.value, 'STRING')
-    return t
-
-
 def t_NUMBER(t):
     r'\d+'
     try:
@@ -236,7 +228,6 @@ def t_NUMBER(t):
         print("Integer value too large %d", t.value)
         t.value = 0
     return t
-
 def t_STRING(t):
     r'"[^"\t\n\r\f\v]*"'
     try:
@@ -344,8 +335,19 @@ def p_statement_for(p):
 
 
 def p_statement_assign(p):
-    'inst : NAME EQUAL expression SEMICOLON'
-    p[0] = ('assign', p[1], p[3])
+    '''inst : NAME EQUAL expression SEMICOLON
+            | NAME PLUS EQUAL expression SEMICOLON
+            | NAME MINUS EQUAL expression SEMICOLON
+            | NAME TIMES EQUAL expression SEMICOLON
+            | NAME DIVIDE EQUAL expression SEMICOLON
+            | NAME PLUS PLUS
+            | NAME MINUS MINUS'''
+    if len(p) == 6:
+        p[0] = ('assign', p[1], (p[2],p[1],p[4]))
+    if len(p) == 4:
+        p[0] = ('assign', p[1], (p[2], p[1], 1))
+    else:
+        p[0] = ('assign', p[1], p[3])
 
 
 def p_statement_print(p):
@@ -464,18 +466,14 @@ carre(2,3,1);
 print("on test AUSSI");
 '''
 
-#s='print(1+2);x=4;x=x+1;'
-#s='1+2;x=4;if(x==4){x=x+1;}print(x);'
-#s='x=4;if(x>4){x=x+1;}print(x);'
-#s='x=4; if(x!=4){x=5;} else{x=0;} print(x);'
 s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x==3){print("x vaux 3");} else {print("x ne vaux ni 1 ni 2 ni 3");}'
 #s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
-#s='print(1+2);x=4;x=x+1;print(x);'
-#s='x=4;while(x!=0){x=x-1;}print(x);'
-#s=';;;;;;;;;;;;;;;;;;;'
-#s='for(i=0;i<=10;i=i+1;) {print(i);}'
-#s='for(;;;){}'
-#s='i=6; a=0;b=1;c=0;cpt=0; while(cpt<=i) {if(cpt<2) {c=cpt;} else {c=a+b;a=b;b=c;} cpt=cpt+1;} print(c);'
+# a gerer
+s='''
+x=8;
+x--;
+print(x);
+'''
 yacc.parse(s)
 
 # while True :
