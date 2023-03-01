@@ -9,7 +9,6 @@ reserved = {
     'print': 'PRINT',
     'if': 'IF',
     'else': 'ELSE',
-    'elif': 'ELIF',
     'while': 'WHILE',
     'for': 'FOR',
     'function': 'FUNCTION',
@@ -24,7 +23,7 @@ tokens = [
              'SEMICOLON',
              'AND', 'OR', 'LOWER', 'HIGHER', 'LOWER_EQUAL', 'HIGHER_EQUAL',
              'EQUAL', 'EQUALS', 'INEQUAL',
-             'DOUBLEQUOTE', 'STRING', 'COMMA'
+             'STRING', 'COMMA', 'COMMENT'
          ] + list(reserved.values())
 
 # Characters for tokens
@@ -46,7 +45,6 @@ t_HIGHER_EQUAL = r'\>='
 t_EQUAL = r'='
 t_EQUALS = r'=='
 t_INEQUAL = r'!='
-t_DOUBLEQUOTE = r'"'
 t_COMMA = r','
 
 # Parsing rules
@@ -237,6 +235,10 @@ def t_STRING(t):
         t.value = ''
     return t
 
+def t_COMMENT(t):
+    r'//.*|/\*.*?\*/'
+    pass
+
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += t.value.count("\n")
@@ -333,6 +335,10 @@ def p_statement_for(p):
     'inst : FOR LPAREN inst inst inst RPAREN LCURLY linst RCURLY'
     p[0] = ('for', p[3], p[4], p[5], p[8])
 
+
+def p_statement_comment(p):
+    '''inst : COMMENT'''
+    pass
 
 def p_statement_assign(p):
     '''inst : NAME EQUAL expression SEMICOLON
@@ -470,9 +476,10 @@ s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x
 #s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
 # a gerer
 s='''
-x=8;
-x--;
-print(x);
+
+/*print("hello world");*/
+print("test world");
+
 '''
 yacc.parse(s)
 
