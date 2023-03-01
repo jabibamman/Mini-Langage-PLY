@@ -1,5 +1,9 @@
 from genereTreeGraphviz2 import printTreeGraph
 
+# Debug
+ErrorColorStart = '\033[91m'
+ErrorColorEnd = '\033[0m'
+
 # Functions
 reserved = {
     'print': 'PRINT',
@@ -86,7 +90,10 @@ def evalInst(p):
         # si il y a des parametre
         if p[2][1] != 'empty':
             args = list()
-            t = p[2][1]
+
+            # p[2] est l'ensemble des parametres
+
+            t = p[2]
             while t is tuple and len(t) == 2:
                 args.append(t[0])
                 t = t[1]
@@ -113,16 +120,20 @@ def evalInst(p):
                 raise Exception(p[1] + " takes " + str(len(function.get('args', []))) + " arguments but " + str(
                     len(call_args)) + " were given")
 
-            for k in range(len(call_args)):
-                names[function['args'][k]] = evalExpr(call_args[k])
+            for k in range(len(arg)):
+                if isinstance(call_args[0][k], tuple):
+                    names[function['args'][0][k]] = evalExpr(call_args[0][k])
+                else:
+                    names[function['args'][0][k]] = call_args[0][k]
+
 
         evalInst(function['body'])
 
         # delete args in names
         if len(p) == 3:
-            for arg in function['args']:
+            # vérifier names[function['args'][0][k]] = evalExpr(call_args[0][k])
+            for arg in function['args'][0]:
                 del names[arg]
-
 
     if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
@@ -167,8 +178,8 @@ def evalExpr(p):
     if type(p) is tuple:
         if p[0] == 'arg':
             return p[1]
-        op, left, right = p  # décomposition de la paire
 
+        op, left, right = p  # décomposition de la paire
         if op == '+': return evalExpr(left) + evalExpr(right)
         if op == '-': return evalExpr(left) - evalExpr(right)
         if op == '*': return evalExpr(left) * evalExpr(right)
@@ -245,11 +256,10 @@ def p_args(p):
             | NUMBER
             | args COMMA NAME
             | args COMMA NUMBER'''
-    p[0] = ('args', p[1])
     if len(p) == 2:
-        p[0] = ('arg', p[1])  # , 'empty')
+        p[0] = ('arg', p[1])#, 'empty')
     else:
-        p[0] = ('arg', p[1], p[3])  # 'empty')
+        p[0] = (('arg', p[3]), p[1])
 
 
 def p_statement_declare_function(p):
@@ -257,11 +267,10 @@ def p_statement_declare_function(p):
                |  FUNCTION NAME LPAREN args RPAREN LCURLY linst RCURLY'''
     if len(p) == 8:
         # p[6] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
-        p[0] = ('function', p[2], ('args', 'empty'), p[6])  # , 'empty')
+        p[0] = ('function', p[2], ('empty'), p[6])  # , 'empty')
     elif len(p) == 9:
         # p[7] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
-        p[0] = ('function', p[2], ('args', p[4]), p[7])  # , 'empty')
-
+        p[0] = ('function', p[2], (p[4]), p[7])  # , 'empty')
 
 def p_statement_call_function(p):
     '''inst : NAME LPAREN RPAREN
@@ -408,22 +417,22 @@ yacc.yacc()
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 1 args /!\
-s = '''
-function carre(x) {
-    print(x*x);
-}
-carre(2);
-print("on test AUSSI");
-'''
-
-# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 2 args /!\
 # s = '''
-# function carre(x,y) {
-#     print(x*y);
+# function carre(x) {
+#     print(x*x);
 # }
-# carre(2,3);
+# carre(2);
 # print("on test AUSSI");
 # '''
+
+# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 2 args /!\
+s = '''
+function carre(x,y) {
+    print(x*y);
+}
+carre(2,3);
+print("on test AUSSI");
+'''
 
 yacc.parse(s)
 
