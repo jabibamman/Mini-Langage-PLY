@@ -108,14 +108,13 @@ def evalInst(p):
                 args.append(t)
             function['args'] = args
         function['body'] = p[3]
-        functions[p[1]] = function
+        functions[function['name']] = function
 
     if p[0] == 'call':
         function = functions[p[1]]
         if len(p) == 3:
             call_args_list = []
             arg = p[2]
-
             while isinstance(arg, tuple) and len(arg) == 2:
                 call_args_list.append(arg[1])
                 arg = arg[0]
@@ -129,6 +128,7 @@ def evalInst(p):
             tuple_arg_function = function.get('args', [])  # get the tuple of the arguments
             tuples = extract_tuples(tuple_arg_function)  # get the list of the arguments
 
+
             for arg in tuples:
                 if isinstance(arg, str) and arg != 'arg':
                     args_names.append(arg)
@@ -136,10 +136,11 @@ def evalInst(p):
                     args_names.append(arg[1])
 
             call_args = extract_tuples(tuple(call_args_list))
-            # there we are deleting 'arg' et 'args' from call_args
-            for arg in call_args:
-                if arg == 'args': break
-                if arg != 'arg': args_values.append(arg)
+
+            # there we are deleting 'arg' and 'args' from call_args
+            for i in call_args:
+                if i == 'args': break
+                if i != 'arg': args_values.append(i)
 
             if dict(function).get('args', []) is None \
                     or len(args_names) < len(args_values) \
@@ -149,12 +150,12 @@ def evalInst(p):
 
             for index, arg_name in enumerate(args_names):
                 valueTuple = ("arg", args_values[index])
-                names[(arg, arg_name)] = evalExpr(valueTuple)
+                names[('arg', arg_name)] = evalExpr(valueTuple)
 
         evalInst(function['body'])
         if len(p) == 3:
             for arg in args_names:
-                del names[('args', arg)]
+                del names[('arg', arg)]
 
     if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
@@ -188,8 +189,8 @@ def evalExpr(p):
         if p.startswith('"'):
             return p[1:-1]
         else:
-            if names.get(('args', p)) is not None:
-                return names[('args', p)]
+            if names.get(('arg', p)) is not None:
+                return names[('arg', p)]
 
             if p in names:
                 return names[p]
@@ -257,7 +258,7 @@ def p_start(p):
     '''start : linst'''
     p[0] = ('start', p[1])
     # print(p[0])
-    printTreeGraph(p[0])
+    #printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -298,7 +299,7 @@ def p_statement_call_function(p):
     if len(p) == 4:
         p[0] = ('call', p[1])
     elif len(p) == 5:
-        p[0] = ('call', p[1], ('args', p[3]))
+        p[0] = ('call', p[1], ('arg', p[3]))
 
 
 def p_statement_if(p):
@@ -437,13 +438,13 @@ yacc.yacc()
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 1 args /!\
-s = '''
-function carre(x) {
-    print(x*x);
-}
-carre(3);
-print("on test AUSSI");
-'''
+# s = '''
+# function carre(x) {
+#     print(x*x);
+# }
+# carre(3);
+# print("on test AUSSI");
+# '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 2 args /!\
 # s = '''
@@ -455,13 +456,13 @@ print("on test AUSSI");
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec n args /!\
-# s = '''
-# function carre(x,y,z) {
-#     print(x+y-z);
-# }
-# carre(2,3,1);
-# print("on test AUSSI");
-# '''
+s = '''
+function carre(x,y,z) {
+    print(x+y-z);
+}
+carre(2,3,1);
+print("on test AUSSI");
+'''
 
 yacc.parse(s)
 
