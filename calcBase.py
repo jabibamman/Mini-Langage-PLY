@@ -236,7 +236,7 @@ def t_STRING(t):
     return t
 
 def t_COMMENT(t):
-    r'\/\/[^\n]*|\/\*(?:.|\n)*?\*\/'
+    r'//.*|/\*(.|\n)*\*/'
     pass
 
 def t_newline(t):
