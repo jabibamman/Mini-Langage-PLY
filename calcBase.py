@@ -69,6 +69,16 @@ functions = {}
 t_ignore = " \t"
 
 
+def extract_tuples(t):
+    result = []
+    for item in t:
+        if isinstance(item, tuple):
+            result.extend(extract_tuples(item))
+        else:
+            result.append(item)
+    return result
+
+
 def evalInst(p):
     print("evalInst de ", p)
     if p == "empty":
@@ -84,15 +94,12 @@ def evalInst(p):
         return
 
     if p[0] == 'function':
-        # p[1][0] = function name, p[1][1] = args, p[1][2] = body
         function = dict()
+        function['name'] = p[1]
 
         # si il y a des parametre
         if p[2][1] != 'empty':
             args = list()
-
-            # p[2] est l'ensemble des parametres
-
             t = p[2]
             while t is tuple and len(t) == 2:
                 args.append(t[0])
@@ -106,34 +113,48 @@ def evalInst(p):
     if p[0] == 'call':
         function = functions[p[1]]
         if len(p) == 3:
-            call_args = list()
+            call_args_list = []
             arg = p[2]
-            while arg is tuple() and len(arg) == 2:
-                call_args.append(arg[1])
+
+            while isinstance(arg, tuple) and len(arg) == 2:
+                call_args_list.append(arg[1])
                 arg = arg[0]
+            if arg != 'arg':
+                call_args_list.append(arg)
 
-            if arg is not tuple():
-                call_args.append(arg[1])
+            args_names = []
+            args_values = []
+
+            # get the name of the arguments from the function
+            tuple_arg_function = function.get('args', [])  # get the tuple of the arguments
+            tuples = extract_tuples(tuple_arg_function)  # get the list of the arguments
+
+            for arg in tuples:
+                if isinstance(arg, str) and arg != 'arg':
+                    args_names.append(arg)
+                elif isinstance(arg, tuple):
+                    args_names.append(arg[1])
+
+            call_args = extract_tuples(tuple(call_args_list))
+            # there we are deleting 'arg' et 'args' from call_args
+            for arg in call_args:
+                if arg == 'args': break
+                if arg != 'arg': args_values.append(arg)
+
             if dict(function).get('args', []) is None \
-                    or len(function.get('args', [])) > len(call_args) \
-                    or len(function.get('args', [])) < len(call_args):
-                raise Exception(p[1] + " takes " + str(len(function.get('args', []))) + " arguments but " + str(
-                    len(call_args)) + " were given")
+                    or len(args_names) < len(args_values) \
+                    or len(args_names) > len(args_values):
+                raise Exception(
+                    p[1] + " takes " + str(len(args_names)) + " arguments, " + str(len(args_values)) + " given")
 
-            for k in range(len(arg)):
-                if isinstance(call_args[0][k], tuple):
-                    names[function['args'][0][k]] = evalExpr(call_args[0][k])
-                else:
-                    names[function['args'][0][k]] = call_args[0][k]
-
+            for index, arg_name in enumerate(args_names):
+                valueTuple = ("arg", args_values[index])
+                names[(arg, arg_name)] = evalExpr(valueTuple)
 
         evalInst(function['body'])
-
-        # delete args in names
         if len(p) == 3:
-            # vérifier names[function['args'][0][k]] = evalExpr(call_args[0][k])
-            for arg in function['args'][0]:
-                del names[arg]
+            for arg in args_names:
+                del names[('args', arg)]
 
     if p[0] == 'assign':
         names[p[1]] = evalExpr(p[2])
@@ -167,18 +188,16 @@ def evalExpr(p):
         if p.startswith('"'):
             return p[1:-1]
         else:
-            if names.get(('arg', p)) is not None:
-                return names[('arg', p)]
+            if names.get(('args', p)) is not None:
+                return names[('args', p)]
 
-            if p not in names:
-                raise NameError(f"'{p}' is not defined")
+            if p in names:
+                return names[p]
 
-            return names[p]
+            raise NameError(f"'{p}' is not defined")
 
     if type(p) is tuple:
-        if p[0] == 'arg':
-            return p[1]
-
+        if p[0] == 'arg': return p[1]
         op, left, right = p  # décomposition de la paire
         if op == '+': return evalExpr(left) + evalExpr(right)
         if op == '-': return evalExpr(left) - evalExpr(right)
@@ -238,7 +257,7 @@ def p_start(p):
     '''start : linst'''
     p[0] = ('start', p[1])
     # print(p[0])
-    # printTreeGraph(p[0])
+    printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -257,9 +276,9 @@ def p_args(p):
             | args COMMA NAME
             | args COMMA NUMBER'''
     if len(p) == 2:
-        p[0] = ('arg', p[1])#, 'empty')
+        p[0] = ('arg', p[1])  # , 'empty')
     else:
-        p[0] = (('arg', p[3]), p[1])
+        p[0] = ('arg', p[3], p[1])
 
 
 def p_statement_declare_function(p):
@@ -271,6 +290,7 @@ def p_statement_declare_function(p):
     elif len(p) == 9:
         # p[7] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
         p[0] = ('function', p[2], (p[4]), p[7])  # , 'empty')
+
 
 def p_statement_call_function(p):
     '''inst : NAME LPAREN RPAREN
@@ -396,7 +416,7 @@ import ply.yacc as yacc
 yacc.yacc()
 # s='print(1+2);x=4;x=x+1;'
 # s = '1+2;x=4;if(x==4){x=x+1;}print(x);'
-#s = 'print(1+2);x=4;x=x+1;print("hello world");'
+# s = 'print(1+2);x=4;x=x+1;print("hello world");'
 # s = 'print("hello world");'
 # s='x=4;if(x>4){x=x+1;}print(x);'
 # s='print(1+2);x=4;x=x+1;print(x);'
@@ -417,22 +437,31 @@ yacc.yacc()
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 1 args /!\
+s = '''
+function carre(x) {
+    print(x*x);
+}
+carre(3);
+print("on test AUSSI");
+'''
+
+# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 2 args /!\
 # s = '''
-# function carre(x) {
-#     print(x*x);
+# function carre(x,y) {
+#     print(x+y);
 # }
-# carre(2);
+# carre(2,3);
 # print("on test AUSSI");
 # '''
 
-# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec 2 args /!\
-s = '''
-function carre(x,y) {
-    print(x*y);
-}
-carre(2,3);
-print("on test AUSSI");
-'''
+# ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec n args /!\
+# s = '''
+# function carre(x,y,z) {
+#     print(x+y-z);
+# }
+# carre(2,3,1);
+# print("on test AUSSI");
+# '''
 
 yacc.parse(s)
 
