@@ -129,9 +129,14 @@ def evalExpr(p):
             if right == 'empty':
                 return [evalExpr(left)]
             return evalExpr(right)+[(evalExpr(left))]
+        if op == 'index':
+            left = evalExpr(left)
+            right = evalExpr(right)
+            if len(left) <= right:
+                raise IndexError(f"index {right} out of range in list {left}")
+            return left[right]
 
     return "UNK"
-
 
 
 def t_NAME(t):
@@ -289,12 +294,15 @@ def p_expression_array(p):
     p[0] = p[2]
 
 def p_elements(p):
-    '''elements : NUMBER
-                | elements COMMA NUMBER'''
+    '''elements : expression
+                | elements COMMA expression'''
     if len(p)==4:
         p[0] = ('array',p[3],p[1])
     else :
         p[0] = ('array',p[1],'empty')
+def p_expression_index(p):
+    'expression : NAME LSQUARE NUMBER RSQUARE'
+    p[0] = ('index',p[1],p[3])
 
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
@@ -316,7 +324,7 @@ yacc.yacc()
 #s=';;;;;;;;;;;;;;;;;;;'
 #s='for(i=0;i<=10;i=i+1;) {print(i);}'
 #s='for(;;;){}'
-s='x=[1];print(x);'
+s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
 #s='i=6; a=0;b=1;c=0;cpt=0; while(cpt<=i) {if(cpt<2) {c=cpt;} else {c=a+b;a=b;b=c;} cpt=cpt+1;} print(c);'
 yacc.parse(s)
 
