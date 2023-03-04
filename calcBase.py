@@ -9,6 +9,7 @@ reserved = {
     'print': 'PRINT',
     'if': 'IF',
     'else': 'ELSE',
+    'elif': 'ELIF',
     'while': 'WHILE',
     'for': 'FOR',
     'function': 'FUNCTION',
@@ -17,14 +18,14 @@ reserved = {
 
 # List of token names
 tokens = [
-             'NAME', 'NUMBER',
-             'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
-             'LPAREN', 'RPAREN', 'LCURLY', 'RCURLY',
-             'SEMICOLON',
-             'AND', 'OR', 'LOWER', 'HIGHER', 'LOWER_EQUAL', 'HIGHER_EQUAL',
-             'EQUAL', 'EQUALS', 'INEQUAL',
-             'STRING', 'COMMA', 'COMMENT'
-         ] + list(reserved.values())
+     'NAME', 'NUMBER',
+     'PLUS', 'MINUS', 'TIMES', 'DIVIDE',
+     'LPAREN', 'RPAREN', 'LCURLY', 'RCURLY',
+     'SEMICOLON',
+     'AND', 'OR', 'LOWER', 'HIGHER', 'LOWER_EQUAL', 'HIGHER_EQUAL',
+     'EQUAL', 'EQUALS', 'INEQUAL',
+     'STRING', 'COMMA', 'COMMENT', 'LSQUARE','RSQUARE'
+ ] + list(reserved.values())
 
 # Characters for tokens
 t_PLUS = r'\+'
@@ -35,7 +36,10 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LCURLY = r'\{'
 t_RCURLY = r'\}'
+t_LSQUARE = r'\['
+t_RSQUARE = r'\]'
 t_SEMICOLON = r';'
+t_COMMA = r','
 t_AND = r'&&'
 t_OR = r'\|\|'
 t_LOWER = r'\<'
@@ -45,7 +49,6 @@ t_HIGHER_EQUAL = r'\>='
 t_EQUAL = r'='
 t_EQUALS = r'=='
 t_INEQUAL = r'!='
-t_COMMA = r','
 
 # Parsing rules
 precedence = (
@@ -198,18 +201,30 @@ def evalExpr(p):
     if type(p) is tuple:
         if p[0] == 'arg': return p[1]
         op, left, right = p  # décomposition de la paire
-        if op == '+': return evalExpr(left) + evalExpr(right)
-        if op == '-': return int(evalExpr(left)) - int(evalExpr(right))
-        if op == '*': return int(evalExpr(left)) * int(evalExpr(right))
-        if op == '/': return int(evalExpr(left)) / int(evalExpr(right))
-        if op == '<': return int(evalExpr(left)) < int(evalExpr(right))
-        if op == '>': return int(evalExpr(left)) > int(evalExpr(right))
+
+        if op == '+' : return evalExpr(left) + evalExpr(right)
+        if op == '-' : return evalExpr(left) - evalExpr(right)
+        if op == '*' : return evalExpr(left) * evalExpr(right)
+        if op == '/' : return evalExpr(left) / evalExpr(right)
+        if op == '<' : return int(evalExpr(left)) < int(evalExpr(right))
+        if op == '>' : return int(evalExpr(left)) > int(evalExpr(right))
         if op == '<=': return int(evalExpr(left)) <= int(evalExpr(right))
         if op == '>=': return int(evalExpr(left)) >= int(evalExpr(right))
-        if op == '!=': return evalExpr(left) != evalExpr(right)
-        if op == '==': return evalExpr(left) == evalExpr(right)
-        if op == '&':  return evalExpr(left) and evalExpr(right)
-        if op == '|':  return evalExpr(left) or evalExpr(right)
+        if op == '!=': return int(evalExpr(left)) != int(evalExpr(right))
+        if op == '==': return int(evalExpr(left)) == int(evalExpr(right))
+        if op == '&' : return evalExpr(left) and evalExpr(right)
+        if op == '|' : return evalExpr(left) or evalExpr(right)
+        if op == 'array':
+            if right == 'empty':
+                return [evalExpr(left)]
+            return evalExpr(right)+[(evalExpr(left))]
+        if op == 'index':
+            left = evalExpr(left)
+            right = evalExpr(right)
+            if len(left) <= right:
+                raise IndexError(f"index {right} out of range in list {left}")
+            return left[right]
+
     return "UNK"
 
 
@@ -315,15 +330,26 @@ def p_statement_if(p):
         p[0] = ('if', p[3], p[6], p[8])
 
 def p_inst_elif(p):
-    '''instelif : ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY instelif
+    '''instelif : ELIF LPAREN expression RPAREN LCURLY linst RCURLY instelif
+                | ELIF LPAREN expression RPAREN LCURLY linst RCURLY ELSE LCURLY linst RCURLY
+                | ELIF LPAREN expression RPAREN LCURLY linst RCURLY
+                | ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY instelif
                 | ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY ELSE LCURLY linst RCURLY
                 | ELSE IF LPAREN expression RPAREN LCURLY linst RCURLY'''
-    if len(p)==10 :
-        p[0] = ('if',p[4],p[7],p[9])
-    elif len(p)==13 :
-        p[0] = ('if',p[4],p[7],p[11])
+    if p[1] == 'elif':
+        if len(p) == 9:
+            p[0] = ('if', p[3], p[6], p[8])
+        elif len(p) == 12:
+            p[0] = ('if', p[3], p[6], p[10])
+        else:
+            p[0] = ('if', p[3], p[6], 'empty')
     else :
-        p[0] = ('if',p[4],p[7],'empty')
+        if len(p) == 10:
+            p[0] = ('if', p[4], p[7], p[9])
+        elif len(p) == 13:
+            p[0] = ('if', p[4], p[7], p[11])
+        else:
+            p[0] = ('if', p[4], p[7], 'empty')
 
 
 def p_statement_while(p):
@@ -415,6 +441,21 @@ def p_expression_string(p):
     'expression : STRING'
     p[0] = p[1]
 
+def p_expression_array(p):
+    'expression : LSQUARE elements RSQUARE'
+    p[0] = p[2]
+
+def p_elements(p):
+    '''elements : expression
+                | elements COMMA expression'''
+    if len(p)==4:
+        p[0] = ('array',p[3],p[1])
+    else :
+        p[0] = ('array',p[1],'empty')
+def p_expression_index(p):
+    'expression : NAME LSQUARE NUMBER RSQUARE'
+    p[0] = ('index',p[1],p[3])
+
 def p_error(p):
     print("Syntax error at '%s'" % p.value)
 
@@ -482,6 +523,7 @@ print("test world");*/
 print("world");
 
 '''
+s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
 yacc.parse(s)
 
 # while True :
