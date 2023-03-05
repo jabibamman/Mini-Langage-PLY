@@ -187,7 +187,7 @@ def evalExpr(p):
     print("evalExpr de ", p)
     if type(p) is int: return p
     if type(p) is str:
-        if p.startswith('"'):
+        if p.startswith('"') or p.startswith("'") :
             return p[1:-1]
         else:
             if names.get(('arg', p)) is not None:
@@ -242,7 +242,7 @@ def t_NUMBER(t):
         t.value = 0
     return t
 def t_STRING(t):
-    r'"[^"\t\n\r\f\v]*"'
+    r'("|\')[^"\'\t\n\r\f\v]*("|\')'
     try:
         t.value = str(t.value)
     except ValueError:
@@ -274,7 +274,7 @@ def p_start(p):
     '''start : linst'''
     p[0] = ('start', p[1])
     # print(p[0])
-    #printTreeGraph(p[0])
+    printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -298,9 +298,16 @@ def p_args(p):
         p[0] = ('arg', p[3], p[1])
 
 
+def p_return(p):
+    '''return : RETURN inst'''
+    p[0] = ('return', p[2])
+
+
 def p_statement_declare_function(p):
     '''inst : FUNCTION NAME LPAREN RPAREN LCURLY linst RCURLY
-               |  FUNCTION NAME LPAREN args RPAREN LCURLY linst RCURLY'''
+               | FUNCTION NAME LPAREN args RPAREN LCURLY linst RCURLY
+               | FUNCTION NAME LPAREN RPAREN LCURLY linst RETURN expression RCURLY
+               | FUNCTION NAME LPAREN args RPAREN LCURLY linst RETURN expression RCURLY'''
     if len(p) == 8:
         # p[6] c'est l'équivalent de body ('bloc, ('print', 'a'), 'empty')
         p[0] = ('function', p[2], ('empty'), p[6])  # , 'empty')
@@ -316,6 +323,7 @@ def p_statement_call_function(p):
         p[0] = ('call', p[1])
     elif len(p) == 5:
         p[0] = ('call', p[1], ('arg', p[3]))
+
 
 
 def p_statement_if(p):
@@ -372,8 +380,8 @@ def p_statement_assign(p):
             | NAME MINUS EQUAL expression SEMICOLON
             | NAME TIMES EQUAL expression SEMICOLON
             | NAME DIVIDE EQUAL expression SEMICOLON
-            | NAME PLUS PLUS
-            | NAME MINUS MINUS'''
+            | NAME PLUS PLUS SEMICOLON
+            | NAME MINUS MINUS SEMICOLON'''
     if len(p) == 6:
         p[0] = ('assign', p[1], (p[2],p[1],p[4]))
     if len(p) == 4:
@@ -452,6 +460,8 @@ def p_elements(p):
         p[0] = ('array',p[3],p[1])
     else :
         p[0] = ('array',p[1],'empty')
+
+
 def p_expression_index(p):
     'expression : NAME LSQUARE NUMBER RSQUARE'
     p[0] = ('index',p[1],p[3])
@@ -505,25 +515,39 @@ yacc.yacc()
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec n args /!\
-s = '''
-function carre(x,y,z) {
-    print(x+y-z);
-}
-carre(2,3,1);
-print("on test AUSSI");
-'''
+# s = '''
+# function carre(x,y,z) {
+#     print(x+y-z);
+# }
+# carre(2,3,1);
+# print("on test AUSSI");
+# '''
 
-s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x==3){print("x vaux 3");} else {print("x ne vaux ni 1 ni 2 ni 3");}'
+# s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x==3){print("x vaux 3");} else {print("x ne vaux ni 1 ni 2 ni 3");}'
 #s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
 # a gerer
-s='''
-//print("comment");
-/*print("hello world");
-print("test world");*/
-print("world");
+# s='''
+# //print("comment");
+# /*print("hello world");
+# print("test world");*/
+# print("world");
+#
+# '''
+# s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
 
-'''
-s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
+
+# s='''
+# x = [1, 2, 3];
+# y = [1, 2, 3, 4, 5];
+# z = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+#
+# print(x[0]);
+# print(y[1]);
+# print(z[2]);
+# print(x[0] + y[1] + z[2]);
+#   '''
+
+s="print('hello world');"
 yacc.parse(s)
 
 # while True :
