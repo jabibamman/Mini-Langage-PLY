@@ -200,6 +200,10 @@ def evalExpr(p):
 
     if type(p) is tuple:
         if p[0] == 'arg': return p[1]
+        if p[0] == 'print': return evalInst(p[1])
+        if p[0].startswith('"') or p[0].startswith("'"):
+            return p[0][1:-1] + evalExpr(p[1])
+
         op, left, right = p  # décomposition de la paire
 
         if op == '+' : return evalExpr(left) + evalExpr(right)
@@ -274,7 +278,7 @@ def p_start(p):
     '''start : linst'''
     p[0] = ('start', p[1])
     # print(p[0])
-    printTreeGraph(p[0])
+    #printTreeGraph(p[0])
     evalInst(p[1])
 
 
@@ -391,8 +395,18 @@ def p_statement_assign(p):
 
 
 def p_statement_print(p):
-    'inst : PRINT LPAREN expression RPAREN SEMICOLON'
+    'inst : PRINT LPAREN multiprint RPAREN SEMICOLON'
     p[0] = ('print', p[3])
+
+
+def p_multi_print(p):
+    '''multiprint : expression COMMA multiprint
+                  | expression'''
+
+    if len(p) == 4:
+        p[0] = (p[1], p[3])
+    else:
+        p[0] = p[1]
 
 
 def p_statement_expr(p):
@@ -535,19 +549,9 @@ yacc.yacc()
 # '''
 # s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
 
-
-# s='''
-# x = [1, 2, 3];
-# y = [1, 2, 3, 4, 5];
-# z = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-#
-# print(x[0]);
-# print(y[1]);
-# print(z[2]);
-# print(x[0] + y[1] + z[2]);
-#   '''
-
-s="print('hello world');"
+#'''
+#s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
+s='print(5, "hello world", " o");'
 yacc.parse(s)
 
 # while True :
