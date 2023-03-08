@@ -1,3 +1,5 @@
+import math
+
 from genereTreeGraphviz2 import printTreeGraph
 
 # Debug
@@ -157,7 +159,20 @@ def evalInst(p):
                 del names[('arg', arg)]
 
     if p[0] == 'assign':
-        names[p[1]] = evalExpr(p[2])
+        print(p[1][1], p[2][1])
+        if p[1][2] != 'empty' or p[2][2] != 'empty' :
+            raise Exception(
+                f"{p[1]} takes { math.floor(len(extract_tuples(p[1]))/2) } arguments, { math.floor(len(extract_tuples(p[2]))/2) } was given")
+
+        list1 = p[1]
+        list2 = p[2]
+
+        while list1[2] != 'empty' and list2[2] != 'empty':
+            names[list1[1]] = evalExpr(list2[1])
+            list1 = list1[2]
+            list2 = list2[2]
+        names[list1[1]] = evalExpr(list2[1])
+
 
     if p[0] == 'print':
         print(">", evalExpr(p[1]))
@@ -294,10 +309,8 @@ def p_bloc(p):
 
 
 def p_args(p):
-    '''args : NAME
-            | NUMBER
-            | args COMMA NAME
-            | args COMMA NUMBER'''
+    '''args : expression
+            | args COMMA expression'''
     if len(p) == 2:
         p[0] = ('arg', p[1])  # , 'empty')
     else:
@@ -385,7 +398,7 @@ def p_statement_comment(p):
     pass
 
 def p_statement_assign(p):
-    '''inst : NAME EQUAL expression SEMICOLON
+    '''inst : listnames EQUAL listexpressions SEMICOLON
             | NAME PLUS EQUAL expression SEMICOLON
             | NAME MINUS EQUAL expression SEMICOLON
             | NAME TIMES EQUAL expression SEMICOLON
@@ -398,6 +411,22 @@ def p_statement_assign(p):
         p[0] = ('assign', p[1], (p[2], p[1], 1))
     else:
         p[0] = ('assign', p[1], p[3])
+
+def p_list_names(p):
+    '''listnames : NAME COMMA listnames
+                 | NAME'''
+    if len(p) == 4:
+        p[0] = ('listnames', p[1], p[3])
+    else:
+        p[0] = ('listnames', p[1], 'empty')
+
+def p_list_expressions(p):
+    '''listexpressions : expression COMMA listexpressions
+                       | expression'''
+    if len(p) == 4:
+        p[0] = ('listexpressions', p[1], p[3])
+    else:
+        p[0] = ('listexpressions', p[1], 'empty')
 
 
 def p_statement_print(p):
@@ -560,6 +589,15 @@ yacc.yacc()
 #s='print("tab = ", [1,2,3,4,5]);'
 s='print(5, "hello world", " o", 53256, "oui", 75886,1);'
 #s='print(id(5)); x=5; print(id(x));'
+s = '''
+ function carre(x,y,z) {
+     print(x+y-z);
+ }
+carre(2,3,1);
+print("on test AUSSI");
+'''
+s='x,y,z=5,6;' \
+  'print("x=",x,", y=",y,", z=",z);'
 yacc.parse(s)
 
 # while True :

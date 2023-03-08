@@ -104,21 +104,27 @@ x=5;
 print(id(x));
 ```
 
+15. Affectations multiples :
+```python
+a,b,c = 2,3,5;
+```
+
 
 ## Fonctionnalités non implémentées
 
-16. Comparaison multiples à la python :
+1. Comparaison multiples à la python :
 ```c++
 1<2<3
 ```
 
-17. Déclaration explicite des variables :
+2. Déclaration explicite des variables :
 ```c#	
 x;
 y;
 z;
 ```
-18. Fonctions avec valeur de retour
+
+3. Fonctions avec valeur de retour
 ```php
 function comparaison(c) {
   if(c==1) {
@@ -128,16 +134,12 @@ function comparaison(c) {
 }
 ```
 
-19. Scope des variables
+4. Scope des variables
 
-20. Fonctions récursives terminales
+5. Fonctions récursives terminales
 
-21. Programmation Orienté Objet
+6. Programmation Orienté Objet
 
-22. Variables globales
-23. Affectations multiples :
-```python
-a,b,c = 2,3,5;
-```
+7. Variables globales
 
-24. Génération automatique d’une docString
+8. Génération automatique d’une docString
