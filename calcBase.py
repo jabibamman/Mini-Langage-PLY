@@ -99,7 +99,7 @@ def evalInst(p):
         function = dict()
         function['name'] = p[1]
 
-        # si il y a des parametre
+        # if there is arguments
         if p[2][1] != 'empty':
             args = list()
             t = p[2]
@@ -108,15 +108,16 @@ def evalInst(p):
                 t = t[1]
             if t is not tuple():
                 args.append(t)
+
             function['args'] = args
         function['body'] = p[3]
         functions[function['name']] = function
 
     if p[0] == 'call':
         function = functions[p[1]]
-        
+        # if there is arguments
         if len(p) == 3:
-            call_args_list = []
+            call_args_list, args_names, args_values = [], [], []
             arg = p[2]
             while isinstance(arg, tuple) and len(arg) == 2:
                 call_args_list.append(arg[1])
@@ -130,7 +131,6 @@ def evalInst(p):
             tuple_arg_function = function.get('args', [])  # get the tuple of the arguments
             tuples = extract_tuples(tuple_arg_function)  # get the list of the arguments
 
-
             for arg in tuples:
                 if isinstance(arg, str) and arg != 'arg':
                     args_names.append(arg)
@@ -139,22 +139,19 @@ def evalInst(p):
 
             call_args = extract_tuples(tuple(call_args_list))
 
-            # there we are deleting 'arg' and 'args' from call_args
-            for i in call_args:
-                if i == 'args': break
-                if i != 'arg': args_values.append(i)
+            #  parcourt les éléments de call_args et ajoute chaque élément à la liste args_values si et seulement si il ne correspond pas à "args" ou "arg".
+            args_values = [i for i in call_args if i not in ('args', 'arg')]
 
-            if dict(function).get('args', []) is None \
-                    or len(args_names) < len(args_values) \
-                    or len(args_names) > len(args_values):
-                raise Exception(
-                    p[1] + " takes " + str(len(args_names)) + " arguments, " + str(len(args_values)) + " given")
+            if 'args' not in function or len(args_names) != len(args_values):
+               raise Exception(
+                    f"{p[1]} takes {len(args_names)} arguments, {len(args_values)} given")
 
             for index, arg_name in enumerate(args_names):
-                valueTuple = ("arg", args_values[index])
-                names[('arg', arg_name)] = evalExpr(valueTuple)
+                names[('arg', arg_name)] = evalExpr(("arg", args_values[index]))
 
         evalInst(function['body'])
+
+        # if there is arguments we delete them
         if len(p) == 3:
             for arg in args_names:
                 del names[('arg', arg)]
@@ -206,16 +203,11 @@ def evalExpr(p):
             if p[2] == 'empty':
                 return str(evalExpr(p[1]))
             return str(evalExpr(p[1])) + evalExpr(p[2])
-
-        if type(p[0]) is int:
-            return p[0]
-
-
+        if type(p[0]) is int: return p[0]
         if p[0].startswith('"') or p[0].startswith("'"):
             return p[0][1:-1]
 
         op, left, right = p  # décomposition de la paire
-
         if op == '+' : return evalExpr(left) + evalExpr(right)
         if op == '-' : return evalExpr(left) - evalExpr(right)
         if op == '*' : return evalExpr(left) * evalExpr(right)
@@ -542,13 +534,13 @@ yacc.yacc()
 # '''
 
 # ! FONCTION ! /!\ WORKING, le parser  reconnait les fonctions avec n args /!\
-# s = '''
+#s = '''
 # function carre(x,y,z) {
 #     print(x+y-z);
-# }
-# carre(2,3,1);
-# print("on test AUSSI");
-# '''
+#
+#carre(2,3,1);
+#print("on test AUSSI");
+'''
 
 # s='x=3; if(x==1){print("x vaux 1");} else if(x==2){print("x vaux 2");} else if(x==3){print("x vaux 3");} else {print("x ne vaux ni 1 ni 2 ni 3");}'
 #s='x=2; if(x==1){x=x*10;} else if(x==2){x=x+10;} print(x);'
@@ -564,9 +556,9 @@ yacc.yacc()
 #s='x=[1,2];print(x[1]);'
 #'''
 #s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
-s='print(5, "hello world", " o");'
-s='print("tab = ", [1,2,3,4,5]);'
-#s='print(5, "hello world", " o", 53256, "oui", 75886,1);'
+#s='print(5, "hello world", " o");'
+#s='print("tab = ", [1,2,3,4,5]);'
+s='print(5, "hello world", " o", 53256, "oui", 75886,1);'
 #s='print(id(5)); x=5; print(id(x));'
 yacc.parse(s)
 
