@@ -92,20 +92,33 @@ x*=1;
 plusieurs lignes */
 ```
 
+13. Print multiples :
+```c++
+print(x+2, "toto");
+```
+
+14. Passage des paramètres par référence
+```c++
+print(id(5));
+x=5;
+print(id(x));
+```
+
+
 ## Fonctionnalités non implémentées
 
-13. Comparaison multiples à la python :
+16. Comparaison multiples à la python :
 ```c++
 1<2<3
 ```
 
-14. Déclaration explicite des variables :
+17. Déclaration explicite des variables :
 ```c#	
 x;
 y;
 z;
 ```
-15.  Fonctions avec valeur de retour
+18. Fonctions avec valeur de retour
 ```php
 function comparaison(c) {
   if(c==1) {
@@ -115,22 +128,16 @@ function comparaison(c) {
 }
 ```
 
-16. Scope des variables
+19. Scope des variables
 
-17. Fonctions récursives terminales
+20. Fonctions récursives terminales
 
-18. Programmation Orienté Objet
+21. Programmation Orienté Objet
 
-19. Passage des paramètres par référence (cf id() en python)
-
-20. Variables globales
-21. Affectations multiples :
+22. Variables globales
+23. Affectations multiples :
 ```python
 a,b,c = 2,3,5;
 ```
-22. Print multiples :
-```c++
-print(x+2, "toto");
-```
 
-23. Génération automatique d’une docString
+24. Génération automatique d’une docString

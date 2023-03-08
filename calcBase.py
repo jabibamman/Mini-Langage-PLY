@@ -13,7 +13,8 @@ reserved = {
     'while': 'WHILE',
     'for': 'FOR',
     'function': 'FUNCTION',
-    'return': 'RETURN'
+    'return': 'RETURN',
+    'id': 'ID',
 }
 
 # List of token names
@@ -113,6 +114,7 @@ def evalInst(p):
 
     if p[0] == 'call':
         function = functions[p[1]]
+        
         if len(p) == 3:
             call_args_list = []
             arg = p[2]
@@ -122,8 +124,7 @@ def evalInst(p):
             if arg != 'arg':
                 call_args_list.append(arg)
 
-            args_names = []
-            args_values = []
+            args_names, args_values = [], []
 
             # get the name of the arguments from the function
             tuple_arg_function = function.get('args', [])  # get the tuple of the arguments
@@ -200,9 +201,18 @@ def evalExpr(p):
 
     if type(p) is tuple:
         if p[0] == 'arg': return p[1]
-        if p[0] == 'print': return evalInst(p[1])
+        if p[0] == 'id': return id(evalExpr(p[1]))
+        if p[0] == 'multiprint':
+            if p[2] == 'empty':
+                return str(evalExpr(p[1]))
+            return str(evalExpr(p[1])) + evalExpr(p[2])
+
+        if type(p[0]) is int:
+            return p[0]
+
+
         if p[0].startswith('"') or p[0].startswith("'"):
-            return p[0][1:-1] + evalExpr(p[1])
+            return p[0][1:-1]
 
         op, left, right = p  # décomposition de la paire
 
@@ -329,6 +339,10 @@ def p_statement_call_function(p):
         p[0] = ('call', p[1], ('arg', p[3]))
 
 
+def p_statement_id(p):
+    '''inst : ID LPAREN expression RPAREN'''
+    p[0] = ('id', p[3])
+
 
 def p_statement_if(p):
     '''inst : IF LPAREN expression RPAREN LCURLY linst RCURLY
@@ -402,11 +416,10 @@ def p_statement_print(p):
 def p_multi_print(p):
     '''multiprint : expression COMMA multiprint
                   | expression'''
-
     if len(p) == 4:
-        p[0] = (p[1], p[3])
+        p[0] = ('multiprint', p[1], p[3])
     else:
-        p[0] = p[1]
+        p[0] = ('multiprint', p[1], 'empty')
 
 
 def p_statement_expr(p):
@@ -548,10 +561,13 @@ yacc.yacc()
 #
 # '''
 # s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
-
+#s='x=[1,2];print(x[1]);'
 #'''
 #s='x=["string", [59,8], "string aussi", 3+2];print(x[1]);'
 s='print(5, "hello world", " o");'
+s='print("tab = ", [1,2,3,4,5]);'
+#s='print(5, "hello world", " o", 53256, "oui", 75886,1);'
+#s='print(id(5)); x=5; print(id(x));'
 yacc.parse(s)
 
 # while True :
